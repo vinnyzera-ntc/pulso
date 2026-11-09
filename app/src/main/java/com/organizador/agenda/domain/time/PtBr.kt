@@ -54,5 +54,19 @@ object PtBr {
         else -> "Boa noite"
     }
 
+    /** "25 min", "1 h", "1 h 30 min". */
+    fun duration(minutes: Int): String {
+        val h = minutes / 60
+        val m = minutes % 60
+        return when {
+            h == 0 -> "$m min"
+            m == 0 -> "$h h"
+            else -> "$h h $m min"
+        }
+    }
+
+    /** Lembrete relativo: "Na hora", "10 min antes", "1 h antes". */
+    fun reminderBefore(minutes: Int): String = if (minutes <= 0) "Na hora" else "${duration(minutes)} antes"
+
     fun String.capitalized(): String = replaceFirstChar { it.titlecase(locale) }
 }

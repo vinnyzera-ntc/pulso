@@ -41,7 +41,7 @@ import com.organizador.agenda.ui.today.TodayScreen
 
 @Composable
 fun PulsoNavHost(
-    startTab: TopLevel? = null,
+    startRoute: Any? = null,
     navController: NavHostController = rememberNavController(),
 ) {
     val c = Pulso.colors
@@ -81,7 +81,7 @@ fun PulsoNavHost(
     ) { inner ->
         NavHost(
             navController = navController,
-            startDestination = (startTab ?: TopLevel.Today).route,
+            startDestination = startRoute ?: TopLevel.Today.route,
             modifier = Modifier.fillMaxSize(),
             enterTransition = enter,
             exitTransition = exit,

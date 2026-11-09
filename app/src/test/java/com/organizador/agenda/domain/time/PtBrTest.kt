@@ -42,4 +42,19 @@ class PtBrTest {
         assertEquals("mar", PtBr.monthShort(java.time.Month.MARCH))
         assertEquals("novembro", PtBr.month(java.time.Month.NOVEMBER))
     }
+
+    @Test
+    fun duration_minutosEHoras() {
+        assertEquals("5 min", PtBr.duration(5))
+        assertEquals("1 h", PtBr.duration(60))
+        assertEquals("1 h 30 min", PtBr.duration(90))
+        assertEquals("2 h", PtBr.duration(120))
+    }
+
+    @Test
+    fun reminderBefore_naHoraEAntes() {
+        assertEquals("Na hora", PtBr.reminderBefore(0))
+        assertEquals("10 min antes", PtBr.reminderBefore(10))
+        assertEquals("1 h antes", PtBr.reminderBefore(60))
+    }
 }
