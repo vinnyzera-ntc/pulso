@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.Pulso" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Fundo da janela = Pulso bg (claro), evita flash na abertura a frio. -->
+    <style name="Theme.Pulso" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/pulso_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
 </resources>

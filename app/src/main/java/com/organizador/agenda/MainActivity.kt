@@ -4,44 +4,34 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.organizador.agenda.ui.theme.PulsoTheme
+import com.organizador.agenda.ui.navigation.PulsoNavHost
+import com.organizador.agenda.ui.navigation.TopLevel
+import com.organizador.agenda.ui.pulso.PulsoTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
         setContent {
             PulsoTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                PulsoNavHost(startTab = debugStartTab())
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    /**
+     * Só no build debug: `adb shell am start -n com.organizador.agenda/.MainActivity -e tela agenda`
+     * abre direto numa aba. Usado pelo script de prints (scripts/prints.sh).
+     */
+    private fun debugStartTab(): TopLevel? {
+        if (!BuildConfig.DEBUG) return null
+        val key = intent?.getStringExtra(EXTRA_SCREEN) ?: return null
+        return TopLevel.entries.firstOrNull { it.key == key }
+    }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    PulsoTheme {
-        Greeting("Android")
+    companion object {
+        const val EXTRA_SCREEN = "tela"
     }
 }
