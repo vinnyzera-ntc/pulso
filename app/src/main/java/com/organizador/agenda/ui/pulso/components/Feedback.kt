@@ -29,6 +29,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import com.organizador.agenda.ui.pulso.PulsoShapes
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -71,7 +74,10 @@ fun NowEventCard(
 ) {
     val c = Pulso.colors
     PulsoCard(
-        modifier.drawBehind {
+        // Desenha a linha de progresso por cima do fundo do cartão (drawBehind ficava coberto
+        // pelo preenchimento), recortada pelo raio do cartão.
+        modifier.clip(PulsoShapes.card).drawWithContent {
+            drawContent()
             val y = size.height - 1.dp.toPx()
             val x = size.width * progress.coerceIn(0f, 1f)
             drawLine(c.line, Offset(0f, y), Offset(size.width, y), 2.dp.toPx())

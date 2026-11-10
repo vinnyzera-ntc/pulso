@@ -1,0 +1,95 @@
+package com.organizador.agenda.ui.common
+
+import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.SnackbarData
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.organizador.agenda.di.ApplicationScope
+import com.organizador.agenda.ui.pulso.Pulso
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/** Mensagem curta para o snackbar, com ação opcional (tipicamente "Desfazer"). */
+data class UiMessage(
+    @param:StringRes val text: Int,
+    @param:StringRes val actionLabel: Int? = null,
+    val action: (suspend () -> Unit)? = null,
+)
+
+/**
+ * Canal único de mensagens do app. Os ViewModels publicam; o NavHost mostra o snackbar.
+ * A ação roda no escopo da aplicação, então "Desfazer" funciona mesmo depois de a tela
+ * que publicou a mensagem ter sido fechada (ex.: excluir uma tarefa na tela de detalhe).
+ */
+@Singleton
+class Messenger @Inject constructor(@param:ApplicationScope private val scope: CoroutineScope) {
+    private val channel = Channel<UiMessage>(Channel.BUFFERED)
+    val messages: Flow<UiMessage> = channel.receiveAsFlow()
+
+    fun show(message: UiMessage) {
+        channel.trySend(message)
+    }
+
+    fun runAction(message: UiMessage) {
+        val action = message.action ?: return
+        scope.launch { action() }
+    }
+}
+
+/** Snackbar Pulso: surface3 + hairline, raio 14, texto + ação em emberText. */
+@Composable
+fun PulsoSnackbarHost(state: SnackbarHostState, modifier: Modifier = Modifier) {
+    SnackbarHost(state, modifier) { data -> PulsoSnackbar(data) }
+}
+
+@Composable
+private fun PulsoSnackbar(data: SnackbarData) {
+    val c = Pulso.colors
+    val shape = RoundedCornerShape(14.dp)
+    Row(
+        Modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .background(c.surface3, shape)
+            .border(1.dp, c.line, shape)
+            .padding(start = 16.dp, end = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(data.visuals.message, style = Pulso.type.bodyS, color = c.text, modifier = Modifier.weight(1f))
+        data.visuals.actionLabel?.let { label ->
+            Box(
+                Modifier
+                    .heightIn(min = 48.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable(role = Role.Button) { data.performAction() }
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(label, style = Pulso.type.bodyS.copy(fontWeight = FontWeight.SemiBold), color = c.emberText)
+            }
+        }
+    }
+}

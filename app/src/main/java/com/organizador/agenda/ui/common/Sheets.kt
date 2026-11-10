@@ -7,10 +7,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,6 +28,7 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.organizador.agenda.domain.time.PtBr
 import com.organizador.agenda.ui.pulso.Pulso
@@ -47,29 +53,42 @@ fun PulsoBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = c.surface1,
+        // O fundo e a borda lineStrong são desenhados no conteúdo: uma borda no modifier da
+        // folha fica presa à posição inicial e aparece como uma linha solta na tela.
+        containerColor = Color.Transparent,
         contentColor = c.text,
         scrimColor = c.scrim,
         shape = PulsoShapes.sheet,
         tonalElevation = 0.dp,
-        modifier = Modifier.border(1.dp, c.lineStrong, PulsoShapes.sheet),
-        dragHandle = {
+        dragHandle = null,
+        modifier = Modifier.statusBarsPadding(),
+        // A própria folha aplica o recuo da barra de gestos, com o fundo indo até a borda da tela.
+        contentWindowInsets = { WindowInsets(0) },
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .background(c.surface1, PulsoShapes.sheet)
+                .border(1.dp, c.lineStrong, PulsoShapes.sheet),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Box(
                 Modifier
                     .padding(top = 10.dp, bottom = 6.dp)
                     .size(width = 38.dp, height = 4.dp)
                     .background(c.lineStrong, RoundedCornerShape(2.dp)),
             )
-        },
-    ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            content = content,
-        )
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .navigationBarsPadding()
+                    .imePadding()
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                content = content,
+            )
+        }
     }
 }
 

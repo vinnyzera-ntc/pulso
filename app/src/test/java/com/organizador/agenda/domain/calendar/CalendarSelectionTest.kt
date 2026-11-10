@@ -21,27 +21,21 @@ class CalendarSelectionTest {
     )
 
     @Test
-    fun visibleIds_semConfiguracao_segueOSistema() {
+    fun visibleIds_semEscolha_segueOSistema() {
         val cals = listOf(cal(1), cal(2, visible = false), cal(3))
-        assertEquals(setOf(1L, 3L), CalendarSelection.visibleIds(cals, null))
+        assertEquals(setOf(1L, 3L), CalendarSelection.visibleIds(cals, emptyMap()))
     }
 
     @Test
-    fun visibleIds_configurado_descartaAgendasQueSumiram() {
-        val cals = listOf(cal(1), cal(2))
-        assertEquals(setOf(2L), CalendarSelection.visibleIds(cals, setOf(2L, 99L)))
+    fun visibleIds_escolhaDoUsuarioVenceOSistema() {
+        val cals = listOf(cal(1), cal(2, visible = false), cal(3))
+        assertEquals(setOf(2L, 3L), CalendarSelection.visibleIds(cals, mapOf(1L to false, 2L to true)))
     }
 
     @Test
-    fun visibleIds_configuradoVazio_naoVoltaAoPadrao() {
-        assertEquals(emptySet<Long>(), CalendarSelection.visibleIds(listOf(cal(1)), emptySet()))
-    }
-
-    @Test
-    fun toggle_partindoDoPadrao() {
-        val cals = listOf(cal(1), cal(2, visible = false))
-        assertEquals(setOf(1L, 2L), CalendarSelection.toggle(cals, null, 2, true))
-        assertEquals(emptySet<Long>(), CalendarSelection.toggle(cals, null, 1, false))
+    fun visibleIds_agendaNovaApareceEEscolhaDeAgendaRemovidaEIgnorada() {
+        val overrides = mapOf(1L to false, 99L to true)
+        assertEquals(setOf(4L), CalendarSelection.visibleIds(listOf(cal(1), cal(4)), overrides))
     }
 
     @Test

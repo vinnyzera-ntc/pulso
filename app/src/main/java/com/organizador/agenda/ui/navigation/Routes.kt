@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object FocusRoute
 @Serializable data object SettingsRoute
 @Serializable data object CaptureRoute
-@Serializable data object NewItemRoute
+@Serializable data class TaskDetailRoute(val id: Long)
 
 /** Destinos do nav pill, na ordem em que aparecem. `key` é usado pelo atalho de debug (-e tela). */
 enum class TopLevel(val key: String, val route: Any, @StringRes val label: Int, val icon: ImageVector) {

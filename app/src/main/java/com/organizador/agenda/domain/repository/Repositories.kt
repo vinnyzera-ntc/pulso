@@ -24,6 +24,13 @@ interface TaskRepository {
     suspend fun save(task: Task): Long
     suspend fun setCompleted(id: Long, completed: Boolean)
 
+    /** Atualiza título, notas, prioridade e data/hora, sem tocar em subtarefas, etiquetas e lembretes. */
+    suspend fun updateFields(task: Task)
+    suspend fun setTags(taskId: Long, names: List<String>)
+
+    /** Troca os lembretes pelos deslocamentos dados (minutos antes do vencimento). */
+    suspend fun setReminders(taskId: Long, offsetsMinutes: List<Int>)
+
     /** Exclui e devolve a tarefa como estava, para "Desfazer". */
     suspend fun delete(id: Long): Task?
 
@@ -63,7 +70,7 @@ interface CalendarRepository {
 
 interface SettingsRepository {
     val settings: Flow<AppSettings>
-    suspend fun setVisibleCalendars(ids: Set<Long>)
+    suspend fun setCalendarVisible(id: Long, visible: Boolean)
     suspend fun setDefaultCalendar(id: Long)
     suspend fun setFocus(focus: FocusSettings)
     suspend fun setTaskReminderTime(time: LocalTime)

@@ -6,20 +6,11 @@ import com.organizador.agenda.domain.model.DeviceCalendar
 object CalendarSelection {
 
     /**
-     * Agendas a mostrar. Sem configuração do usuário, segue o "visível" do app de agenda do sistema.
-     * Ids configurados que não existem mais (agenda removida) são descartados.
+     * Agendas a mostrar. Cada agenda segue a escolha do usuário, se houver; senão, o "visível"
+     * do app de agenda do sistema. Escolhas de agendas que não existem mais são ignoradas.
      */
-    fun visibleIds(calendars: List<DeviceCalendar>, configured: Set<Long>?): Set<Long> {
-        val existing = calendars.map { it.id }.toSet()
-        return configured?.intersect(existing)
-            ?: calendars.filter { it.visibleInSystem }.map { it.id }.toSet()
-    }
-
-    /** Novo conjunto após ligar/desligar uma agenda, partindo do estado efetivo atual. */
-    fun toggle(calendars: List<DeviceCalendar>, configured: Set<Long>?, id: Long, visible: Boolean): Set<Long> {
-        val current = visibleIds(calendars, configured)
-        return if (visible) current + id else current - id
-    }
+    fun visibleIds(calendars: List<DeviceCalendar>, overrides: Map<Long, Boolean>): Set<Long> =
+        calendars.filter { overrides[it.id] ?: it.visibleInSystem }.map { it.id }.toSet()
 
     /**
      * Agenda onde criar compromissos: a escolhida pelo usuário, se ainda existir e aceitar escrita;

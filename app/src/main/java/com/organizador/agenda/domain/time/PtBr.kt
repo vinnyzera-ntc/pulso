@@ -4,6 +4,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.Month
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 /**
@@ -66,7 +67,27 @@ object PtBr {
     }
 
     /** Lembrete relativo: "Na hora", "10 min antes", "1 h antes". */
-    fun reminderBefore(minutes: Int): String = if (minutes <= 0) "Na hora" else "${duration(minutes)} antes"
+    fun reminderBefore(minutes: Int): String = when {
+        minutes <= 0 -> "Na hora"
+        minutes % 1440 == 0 -> if (minutes == 1440) "1 dia antes" else "${minutes / 1440} dias antes"
+        else -> "${duration(minutes)} antes"
+    }
+
+    /**
+     * Dia relativo a hoje, em minúsculas: "hoje", "amanhã", "ontem", "há 3 dias" (até 6),
+     * senão a data curta ("ter, 10 nov"; com ano se for outro ano).
+     */
+    fun relativeDay(date: LocalDate, today: LocalDate): String =
+        when (val days = ChronoUnit.DAYS.between(today, date).toInt()) {
+            0 -> "hoje"
+            1 -> "amanhã"
+            -1 -> "ontem"
+            in -6..-2 -> "há ${-days} dias"
+            else -> shortDate(date).lowercase(locale) + if (date.year != today.year) " ${date.year}" else ""
+        }
+
+    /** "em 25 min", "em 1 h 20 min"; "agora" para zero ou negativo. */
+    fun inMinutes(minutes: Long): String = if (minutes <= 0) "agora" else "em ${duration(minutes.toInt())}"
 
     fun String.capitalized(): String = replaceFirstChar { it.titlecase(locale) }
 }

@@ -11,8 +11,11 @@ data class FocusSettings(
 )
 
 data class AppSettings(
-    /** null = ainda não configurado: mostra as agendas visíveis no app de agenda do sistema. */
-    val visibleCalendarIds: Set<Long>? = null,
+    /**
+     * Escolhas do usuário por agenda (id -> visível). Agendas sem escolha seguem o "visível"
+     * do app de agenda do sistema, então uma agenda nova aparece sem precisar configurar.
+     */
+    val calendarVisibility: Map<Long, Boolean> = emptyMap(),
     /** null = escolha automática (agenda principal da conta Google). */
     val defaultCalendarId: Long? = null,
     val focus: FocusSettings = FocusSettings(),

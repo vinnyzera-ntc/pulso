@@ -80,8 +80,10 @@ class TaskDaoTest {
         assertEquals(listOf("Só uma"), u.subtasks.map { it.title })
         assertEquals(listOf("pessoal"), u.tags.map { it.name })
         assertEquals(t.tags.first { it.name == "pessoal" }.id, u.tags.single().id)
-        // Etiqueta sem uso continua existindo (pode ser reaproveitada).
-        assertEquals(setOf("finanças", "pessoal"), tasks.observeTags().first().map { it.name }.toSet())
+        // Etiqueta que ficou sem nenhuma tarefa é removida.
+        assertEquals(listOf("pessoal"), tasks.observeTags().first().map { it.name })
+        tasks.delete(id)
+        assertTrue(tasks.observeTags().first().isEmpty())
     }
 
     @Test
@@ -144,5 +146,23 @@ class TaskDaoTest {
         assertTrue(session.completed)
         assertEquals(Instant.now(clock), session.endedAt)
         assertEquals(25, session.plannedMinutes)
+    }
+
+    @Test
+    fun atualizarCampos_naoRecriaSubtarefas_eTrocaEtiquetasELembretes() = runTest {
+        val id = tasks.save(sample())
+        val before = tasks.getTask(id)!!
+        tasks.updateFields(before.copy(title = "Novo título", notes = "nota", priority = Priority.P1, dueDate = null, dueTime = LocalTime.NOON))
+        tasks.setTags(id, listOf("#Casa", "pessoal"))
+        tasks.setReminders(id, listOf(60, 60, 0))
+        val after = tasks.getTask(id)!!
+        assertEquals("Novo título", after.title)
+        assertEquals("nota", after.notes)
+        assertEquals(Priority.P1, after.priority)
+        assertNull(after.dueDate)
+        assertNull("sem data não há hora", after.dueTime)
+        assertEquals("ids das subtarefas preservados", before.subtasks.map { it.id }, after.subtasks.map { it.id })
+        assertEquals(listOf("casa", "pessoal"), after.tags.map { it.name })
+        assertEquals(listOf(0, 60), after.reminders.map { it.offsetMinutes })
     }
 }

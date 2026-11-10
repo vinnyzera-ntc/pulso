@@ -53,9 +53,22 @@ class RoomTaskRepository @Inject constructor(
         dao.setCompletedAt(id, if (completed) now else null, now)
     }
 
+    override suspend fun updateFields(task: Task) {
+        require(task.title.isNotBlank()) { "Tarefa sem título" }
+        val e = task.toEntity(Instant.now(clock))
+        dao.updateFields(e.id, e.title, e.notes, e.priority, e.dueDate, e.dueTime, e.updatedAt)
+    }
+
+    override suspend fun setTags(taskId: Long, names: List<String>) =
+        dao.replaceTags(taskId, names.map(::normalizeTagName).filter { it.isNotEmpty() })
+
+    override suspend fun setReminders(taskId: Long, offsetsMinutes: List<Int>) =
+        dao.replaceReminders(taskId, offsetsMinutes.distinct().map { TaskReminderEntity(taskId = taskId, offsetMinutes = it) })
+
     override suspend fun delete(id: Long): Task? {
         val snapshot = dao.get(id)?.toDomain() ?: return null
         dao.deleteTask(id)
+        dao.deleteOrphanTags()
         return snapshot
     }
 

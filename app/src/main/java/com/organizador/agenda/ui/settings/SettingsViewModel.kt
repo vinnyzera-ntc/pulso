@@ -13,7 +13,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -66,9 +65,7 @@ class SettingsViewModel @Inject constructor(
     fun onResume() = calendarRepo.refresh()
 
     fun setCalendarVisible(id: Long, visible: Boolean) = viewModelScope.launch {
-        val calendars = calendarRepo.observeCalendars().first()
-        val configured = settingsRepo.settings.first().visibleCalendarIds
-        settingsRepo.setVisibleCalendars(CalendarSelection.toggle(calendars, configured, id, visible))
+        settingsRepo.setCalendarVisible(id, visible)
     }
 
     fun setDefaultCalendar(id: Long) = viewModelScope.launch { settingsRepo.setDefaultCalendar(id) }
@@ -90,7 +87,7 @@ class SettingsViewModel @Inject constructor(
 
         /** Montagem do estado de tela, pura (testada em JVM). */
         fun buildState(settings: AppSettings, calendars: List<DeviceCalendar>, hasAccess: Boolean): SettingsUiState {
-            val visible = CalendarSelection.visibleIds(calendars, settings.visibleCalendarIds)
+            val visible = CalendarSelection.visibleIds(calendars, settings.calendarVisibility)
             val rows = calendars.map {
                 CalendarRowUi(it.id, it.displayName, it.accountName, it.color, it.id in visible, it.canWrite)
             }

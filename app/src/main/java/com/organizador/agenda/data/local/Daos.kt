@@ -8,6 +8,8 @@ import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 
 @Dao
 interface TaskDao {
@@ -67,6 +69,10 @@ interface TaskDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTaskTags(refs: List<TaskTagCrossRef>)
 
+    /** Etiquetas que não estão em nenhuma tarefa deixam de existir (e de ser sugeridas). */
+    @Query("DELETE FROM tags WHERE id NOT IN (SELECT tag_id FROM task_tags)")
+    suspend fun deleteOrphanTags()
+
     @Query("DELETE FROM task_tags WHERE task_id = :taskId")
     suspend fun deleteTagsOf(taskId: Long)
 
@@ -93,15 +99,34 @@ interface TaskDao {
         val id = if (task.id == 0L || reinsert) insertTask(task) else task.id.also { updateTask(task) }
         deleteSubtasksOf(id)
         insertSubtasks(subtasks.mapIndexed { i, s -> s.copy(id = 0, taskId = id, position = i) })
-        deleteTagsOf(id)
+        replaceTags(id, tagNames)
+        replaceReminders(id, reminders)
+        return id
+    }
+
+    /** Troca as etiquetas da tarefa, criando as que ainda não existem. */
+    @Transaction
+    suspend fun replaceTags(taskId: Long, tagNames: List<String>) {
+        deleteTagsOf(taskId)
         val tagIds = tagNames.distinct().map { name ->
             tagByName(name)?.id ?: insertTag(TagEntity(name = name)).takeIf { it > 0 } ?: tagByName(name)!!.id
         }
-        insertTaskTags(tagIds.map { TaskTagCrossRef(id, it) })
-        deleteRemindersOf(id)
-        insertReminders(reminders.map { it.copy(id = 0, taskId = id) })
-        return id
+        insertTaskTags(tagIds.map { TaskTagCrossRef(taskId, it) })
+        deleteOrphanTags()
     }
+
+    @Transaction
+    suspend fun replaceReminders(taskId: Long, reminders: List<TaskReminderEntity>) {
+        deleteRemindersOf(taskId)
+        insertReminders(reminders.map { it.copy(id = 0, taskId = taskId) })
+    }
+
+    /** Só os campos da própria tarefa; subtarefas, etiquetas e lembretes ficam como estão. */
+    @Query(
+        "UPDATE tasks SET title = :title, notes = :notes, priority = :priority, due_date = :dueDate, " +
+            "due_time = :dueTime, updated_at = :now WHERE id = :id",
+    )
+    suspend fun updateFields(id: Long, title: String, notes: String, priority: Int, dueDate: LocalDate?, dueTime: LocalTime?, now: Instant)
 }
 
 @Dao

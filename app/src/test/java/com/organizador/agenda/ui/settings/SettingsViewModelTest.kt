@@ -87,7 +87,7 @@ class SettingsViewModelTest {
             assertEquals(listOf(2L), after.accounts.flatMap { it.calendars }.filter { it.visible }.map { it.id })
             cancelAndIgnoreRemainingEvents()
         }
-        assertEquals(setOf(2L), settings.state.value.visibleCalendarIds)
+        assertEquals(mapOf(1L to false), settings.state.value.calendarVisibility)
     }
 
     @Test
@@ -108,7 +108,8 @@ class SettingsViewModelTest {
     private class FakeSettings : SettingsRepository {
         val state = MutableStateFlow(AppSettings())
         override val settings: Flow<AppSettings> = state
-        override suspend fun setVisibleCalendars(ids: Set<Long>) = state.update { it.copy(visibleCalendarIds = ids) }
+        override suspend fun setCalendarVisible(id: Long, visible: Boolean) =
+            state.update { it.copy(calendarVisibility = it.calendarVisibility + (id to visible)) }
         override suspend fun setDefaultCalendar(id: Long) = state.update { it.copy(defaultCalendarId = id) }
         override suspend fun setFocus(focus: FocusSettings) = state.update { it.copy(focus = focus) }
         override suspend fun setTaskReminderTime(time: LocalTime) = state.update { it.copy(taskReminderTime = time) }

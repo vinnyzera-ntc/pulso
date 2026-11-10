@@ -57,4 +57,25 @@ class PtBrTest {
         assertEquals("10 min antes", PtBr.reminderBefore(10))
         assertEquals("1 h antes", PtBr.reminderBefore(60))
     }
+
+    @Test
+    fun relativeDay_hojeAmanhaOntemEDatas() {
+        val today = LocalDate.of(2026, 11, 10)
+        assertEquals("hoje", PtBr.relativeDay(today, today))
+        assertEquals("amanhã", PtBr.relativeDay(today.plusDays(1), today))
+        assertEquals("ontem", PtBr.relativeDay(today.minusDays(1), today))
+        assertEquals("há 6 dias", PtBr.relativeDay(today.minusDays(6), today))
+        assertEquals("ter, 3 nov", PtBr.relativeDay(today.minusDays(7), today))
+        assertEquals("qui, 12 nov", PtBr.relativeDay(today.plusDays(2), today))
+        assertEquals("sex, 1 jan 2027", PtBr.relativeDay(LocalDate.of(2027, 1, 1), today))
+    }
+
+    @Test
+    fun inMinutes_eLembreteEmDias() {
+        assertEquals("em 25 min", PtBr.inMinutes(25))
+        assertEquals("em 1 h 20 min", PtBr.inMinutes(80))
+        assertEquals("agora", PtBr.inMinutes(0))
+        assertEquals("1 dia antes", PtBr.reminderBefore(1440))
+        assertEquals("2 dias antes", PtBr.reminderBefore(2880))
+    }
 }

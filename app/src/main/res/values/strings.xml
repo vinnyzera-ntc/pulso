@@ -23,6 +23,91 @@
     <string name="focus_eyebrow">Modo foco</string>
     <string name="capture_prompt">O que você precisa lembrar?</string>
 
+    <!-- Geral -->
+    <string name="action_undo">Desfazer</string>
+    <string name="action_done">Concluir</string>
+    <string name="state_expanded">Aberto</string>
+    <string name="state_collapsed">Recolhido</string>
+
+    <!-- Hoje -->
+    <string name="today_now">Agora</string>
+    <string name="today_next">Próximo</string>
+    <string name="today_tasks">Tarefas de hoje</string>
+    <string name="today_see_all">Ver todas</string>
+    <plurals name="today_progress">
+        <item quantity="one">%1$d de %2$d tarefa</item>
+        <item quantity="other">%1$d de %2$d tarefas</item>
+    </plurals>
+    <string name="today_empty_title">Nenhuma tarefa para hoje</string>
+    <string name="today_empty_body">Aproveite ou planeje amanhã.</string>
+    <string name="today_plan_tomorrow">Planejar amanhã</string>
+    <string name="today_connect_title">Conectar ao Google Agenda</string>
+    <string name="today_connect_body">Veja aqui o compromisso de agora e o próximo. Toque para abrir os Ajustes.</string>
+
+    <!-- Tarefas -->
+    <string name="filter_all">Todas</string>
+    <string name="filter_today">Hoje</string>
+    <string name="filter_next7">Próximos 7 dias</string>
+    <string name="filter_overdue">Atrasadas</string>
+    <string name="filter_no_date">Sem data</string>
+    <string name="section_overdue">Atrasadas</string>
+    <string name="section_today">Hoje</string>
+    <string name="section_tomorrow">Amanhã</string>
+    <string name="section_next7">Próximos 7 dias</string>
+    <string name="section_later">Mais tarde</string>
+    <string name="section_no_date">Sem data</string>
+    <string name="tasks_completed_count">Concluídas (%1$d)</string>
+    <string name="tasks_search_placeholder">Buscar por título, nota ou etiqueta</string>
+    <string name="tasks_close_search">Fechar busca</string>
+    <string name="tasks_empty_title">Nenhuma tarefa ainda</string>
+    <string name="tasks_empty_body">Anote a primeira coisa que você precisa fazer.</string>
+    <string name="tasks_create_first">Criar primeira tarefa</string>
+    <string name="tasks_create">Criar tarefa</string>
+    <string name="tasks_no_results_title">Nada encontrado</string>
+    <string name="tasks_no_results_body">Nenhuma tarefa combina com essa busca.</string>
+    <string name="tasks_filter_empty_title">Nada por aqui</string>
+    <string name="tasks_filter_empty_body">Nenhuma tarefa neste filtro.</string>
+    <string name="msg_task_completed">Tarefa concluída</string>
+    <string name="msg_task_deleted">Tarefa excluída</string>
+    <string name="msg_task_created">Tarefa criada</string>
+
+    <!-- Nova tarefa e campos -->
+    <string name="new_task_title">Nova tarefa</string>
+    <string name="new_task_placeholder">O que precisa ser feito?</string>
+    <string name="new_task_cta">Criar tarefa</string>
+    <string name="field_when">Quando</string>
+    <string name="field_priority">Prioridade</string>
+    <string name="field_reminder">Lembrete</string>
+    <string name="field_tags">Etiquetas</string>
+    <string name="when_today">Hoje</string>
+    <string name="when_tomorrow">Amanhã</string>
+    <string name="when_no_date">Sem data</string>
+    <string name="when_pick_date">Escolher data</string>
+    <string name="when_no_time">Sem horário</string>
+    <string name="when_clear_time">Remover horário</string>
+    <string name="when_time_title">Horário da tarefa</string>
+    <string name="reminder_none">Nenhum</string>
+    <string name="reminder_description">Quanto tempo antes do horário da tarefa.</string>
+    <string name="priority_description">P1 é a mais alta. P4 é sem prioridade.</string>
+    <string name="tags_new_placeholder">Nova etiqueta</string>
+
+    <!-- Detalhe da tarefa -->
+    <string name="task_delete">Excluir tarefa</string>
+    <string name="task_complete">Concluir tarefa</string>
+    <string name="task_reopen">Reabrir tarefa</string>
+    <string name="task_subtasks">Subtarefas</string>
+    <string name="task_add_subtask">Adicionar subtarefa</string>
+    <string name="task_remove_subtask">Remover subtarefa %1$s</string>
+    <string name="task_notes">Notas</string>
+    <string name="task_notes_placeholder">Adicionar notas</string>
+    <string name="task_reminders">Lembretes</string>
+    <string name="task_add_reminder">Adicionar lembrete</string>
+    <string name="task_remove_reminder">Remover lembrete %1$s</string>
+    <string name="task_reminders_need_date">Defina uma data para adicionar lembretes.</string>
+    <string name="task_overdue_prefix">Atrasada · %1$s</string>
+    <string name="task_missing_title">Tarefa não encontrada</string>
+    <string name="task_missing_body">Ela pode ter sido excluída.</string>
+
     <!-- Ajustes -->
     <string name="settings_section_agenda">Agenda</string>
     <string name="settings_section_visible">Agendas visíveis</string>
@@ -55,14 +140,9 @@
     <string name="perm_calendar_blocked_message">O Android não vai perguntar de novo. Para ver seus compromissos, ative Agenda em Permissões nas configurações do app.</string>
 
     <!-- Placeholders da fase 0 (substituídos nas próximas fases) -->
-    <string name="placeholder_today_title">Seu dia aparece aqui</string>
-    <string name="placeholder_today_body">Progresso, o compromisso de agora e as tarefas de hoje chegam na fase 2.</string>
     <string name="placeholder_agenda_title">Agenda em construção</string>
     <string name="placeholder_agenda_body">As visões dia, semana e mês com o Google Agenda chegam na fase 3.</string>
-    <string name="placeholder_tasks_title">Nenhuma tarefa ainda</string>
-    <string name="placeholder_tasks_body">Filtros, prioridades e subtarefas chegam na fase 2.</string>
     <string name="placeholder_focus_title">Nada em foco</string>
     <string name="placeholder_focus_body">O timer Pomodoro ligado a uma tarefa chega na fase 4.</string>
     <string name="placeholder_capture_body">O campo que entende português chega na fase 4.</string>
-    <string name="placeholder_new_item_body">A folha de criação de tarefa e compromisso chega nas fases 2 e 3.</string>
 </resources>

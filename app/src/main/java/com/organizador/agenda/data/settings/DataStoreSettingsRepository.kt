@@ -22,7 +22,8 @@ class DataStoreSettingsRepository @Inject constructor(
 ) : SettingsRepository {
 
     private object Keys {
-        val visibleCalendars = stringSetPreferencesKey("visible_calendars")
+        val shownCalendars = stringSetPreferencesKey("calendars_shown")
+        val hiddenCalendars = stringSetPreferencesKey("calendars_hidden")
         val defaultCalendar = longPreferencesKey("default_calendar")
         val focusMinutes = intPreferencesKey("focus_minutes")
         val shortBreak = intPreferencesKey("short_break_minutes")
@@ -38,7 +39,10 @@ class DataStoreSettingsRepository @Inject constructor(
         val d = AppSettings()
         val f = d.focus
         AppSettings(
-            visibleCalendarIds = p[Keys.visibleCalendars]?.mapNotNull { it.toLongOrNull() }?.toSet(),
+            calendarVisibility = buildMap {
+                p[Keys.shownCalendars]?.forEach { id -> id.toLongOrNull()?.let { put(it, true) } }
+                p[Keys.hiddenCalendars]?.forEach { id -> id.toLongOrNull()?.let { put(it, false) } }
+            },
             defaultCalendarId = p[Keys.defaultCalendar],
             focus = FocusSettings(
                 focusMinutes = p[Keys.focusMinutes] ?: f.focusMinutes,
@@ -53,8 +57,14 @@ class DataStoreSettingsRepository @Inject constructor(
         )
     }
 
-    override suspend fun setVisibleCalendars(ids: Set<Long>) {
-        store.edit { it[Keys.visibleCalendars] = ids.map(Long::toString).toSet() }
+    override suspend fun setCalendarVisible(id: Long, visible: Boolean) {
+        val key = id.toString()
+        store.edit {
+            val shown = it[Keys.shownCalendars] ?: emptySet()
+            val hidden = it[Keys.hiddenCalendars] ?: emptySet()
+            it[Keys.shownCalendars] = if (visible) shown + key else shown - key
+            it[Keys.hiddenCalendars] = if (visible) hidden - key else hidden + key
+        }
     }
 
     override suspend fun setDefaultCalendar(id: Long) {
