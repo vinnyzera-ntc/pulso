@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -48,10 +50,12 @@ fun BottomNavPill(
     createLongPressLabel: String? = null,
 ) {
     val c = Pulso.colors
+    // Em telas largas (paisagem) o pill não estica: fica com no máximo 460dp, centralizado.
+    Box(modifier.fillMaxWidth().navigationBarsPadding(), contentAlignment = Alignment.Center) {
     Row(
-        modifier
+        Modifier
+            .widthIn(max = 460.dp)
             .fillMaxWidth()
-            .navigationBarsPadding()
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -93,5 +97,6 @@ fun BottomNavPill(
             onLongClick = onCreateLongPress,
             onLongClickLabel = createLongPressLabel,
         )
+    }
     }
 }

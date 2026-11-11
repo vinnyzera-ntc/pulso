@@ -50,6 +50,7 @@ import com.organizador.agenda.ui.common.PulsoDatePickerDialog
 import com.organizador.agenda.ui.common.PulsoTextField
 import com.organizador.agenda.ui.common.PulsoTimePickerDialog
 import com.organizador.agenda.ui.common.calendarPermissionCopy
+import com.organizador.agenda.ui.common.isCompactHeight
 import com.organizador.agenda.ui.common.useTimeLabel
 import com.organizador.agenda.ui.pulso.Pulso
 import com.organizador.agenda.ui.pulso.PulsoShapes
@@ -109,7 +110,8 @@ fun ColumnScope.EventFormContent(
 
     // Compromisso novo: o título já abre com o foco (e o teclado), como na tarefa.
     val titleFocus = remember { FocusRequester() }
-    if (!state.editing) LaunchedEffect(Unit) { titleFocus.requestFocus() }
+    // Em tela baixa (paisagem) o teclado cobriria a folha inteira: o foco fica por conta do usuário.
+    if (!state.editing && !isCompactHeight()) LaunchedEffect(Unit) { titleFocus.requestFocus() }
     PulsoTextField(
         value = form.title,
         onValueChange = { v -> onChange { it.copy(title = v) } },

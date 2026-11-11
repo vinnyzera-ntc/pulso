@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
@@ -17,6 +19,14 @@ import androidx.compose.ui.unit.dp
 import com.organizador.agenda.domain.time.PtBr
 import com.organizador.agenda.ui.pulso.Pulso
 import com.organizador.agenda.ui.pulso.PulsoSpace
+
+/**
+ * Tela com pouca altura (celular em paisagem). Nela, o que é alto demais muda de forma:
+ * seletores de data e hora viram campos de digitação e botões fixos passam a rolar.
+ */
+@Composable
+@ReadOnlyComposable
+fun isCompactHeight(): Boolean = LocalConfiguration.current.screenHeightDp < 480
 
 /**
  * Cabeçalho de tela Pulso: eyebrow opcional (caixa alta, text2) + título em `headline`,

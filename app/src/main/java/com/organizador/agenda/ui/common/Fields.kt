@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -172,8 +173,10 @@ fun PulsoDatePickerDialog(
     onDismiss: () -> Unit,
 ) {
     val c = Pulso.colors
+    // Em tela baixa (paisagem) a grade do mês não cabe: a data é digitada.
     val state = rememberDatePickerState(
         initialSelectedDateMillis = initial.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        initialDisplayMode = if (isCompactHeight()) DisplayMode.Input else DisplayMode.Picker,
     )
     val picked = state.selectedDateMillis?.let { Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate() }
     val colors = DatePickerDefaults.colors(

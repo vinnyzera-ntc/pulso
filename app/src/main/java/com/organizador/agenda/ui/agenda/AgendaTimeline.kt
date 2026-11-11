@@ -108,7 +108,7 @@ fun AgendaTimeline(
         val lane = maxWidth - Gutter - 4.dp
         for (h in 1..23) {
             // O rótulo da hora some quando o "agora" está em cima dele (os dois se sobreporiam).
-            if (nowMinutes != null && kotlin.math.abs(nowMinutes - h * 60) < 20) continue
+            if (nowMinutes != null && kotlin.math.abs(nowMinutes - h * 60) < 25) continue
             Text(
                 "%02d:00".format(h),
                 style = Pulso.type.numeric.copy(fontSize = Pulso.type.eyebrow.fontSize),

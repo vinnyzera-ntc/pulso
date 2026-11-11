@@ -21,6 +21,7 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -140,25 +141,26 @@ fun PulsoTimePickerDialog(
             Modifier
                 .background(c.surface1, PulsoShapes.card)
                 .border(1.dp, c.line, PulsoShapes.card)
+                .verticalScroll(rememberScrollState())
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(title, style = Pulso.type.title, color = c.text, modifier = Modifier.fillMaxWidth())
-            TimePicker(
-                state = state,
-                colors = TimePickerDefaults.colors(
-                    clockDialColor = c.surface3,
-                    clockDialSelectedContentColor = c.onEmber,
-                    clockDialUnselectedContentColor = c.text,
-                    selectorColor = c.ember,
-                    containerColor = c.surface1,
-                    timeSelectorSelectedContainerColor = c.emberSoft,
-                    timeSelectorUnselectedContainerColor = c.surface3,
-                    timeSelectorSelectedContentColor = c.emberText,
-                    timeSelectorUnselectedContentColor = c.text,
-                ),
+            val timeColors = TimePickerDefaults.colors(
+                clockDialColor = c.surface3,
+                clockDialSelectedContentColor = c.onEmber,
+                clockDialUnselectedContentColor = c.text,
+                selectorColor = c.ember,
+                containerColor = c.surface1,
+                timeSelectorSelectedContainerColor = c.emberSoft,
+                timeSelectorUnselectedContainerColor = c.surface3,
+                timeSelectorSelectedContentColor = c.emberText,
+                timeSelectorUnselectedContentColor = c.text,
             )
+            // Em tela baixa (paisagem) o mostrador não cabe: a hora é digitada.
+            if (isCompactHeight()) TimeInput(state = state, colors = timeColors)
+            else TimePicker(state = state, colors = timeColors)
             val picked = LocalTime.of(state.hour, state.minute)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SecondaryButton("Cancelar", onClick = onDismiss, modifier = Modifier.weight(1f))

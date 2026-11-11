@@ -67,6 +67,7 @@ import com.organizador.agenda.domain.task.TaskLists
 import com.organizador.agenda.domain.time.PtBr
 import com.organizador.agenda.ui.common.ChoiceSheet
 import com.organizador.agenda.ui.common.EmptyState
+import com.organizador.agenda.ui.common.isCompactHeight
 import com.organizador.agenda.ui.common.PulsoBottomSheet
 import com.organizador.agenda.ui.pulso.Pulso
 import com.organizador.agenda.ui.pulso.PulsoSpace
@@ -125,6 +126,15 @@ private fun androidx.compose.foundation.layout.ColumnScope.TaskDetailContent(
         onDispose {
             vm.rename(latestTitle)
             vm.setNotes(latestNotes)
+        }
+    }
+
+    val compact = isCompactHeight()
+    val mainAction: @Composable () -> Unit = {
+        if (task.isDone) {
+            SecondaryButton(stringResource(R.string.task_reopen), { vm.setDone(false) }, Modifier.fillMaxWidth())
+        } else {
+            PrimaryButton(stringResource(R.string.task_complete), { vm.setDone(true) }, Modifier.fillMaxWidth())
         }
     }
 
@@ -208,15 +218,12 @@ private fun androidx.compose.foundation.layout.ColumnScope.TaskDetailContent(
                 }
             }
         }
+        if (compact) Box(Modifier.fillMaxWidth().padding(top = 20.dp)) { mainAction() }
     }
 
-    // ---------- Ação principal ----------
-    Box(Modifier.fillMaxWidth().padding(horizontal = PulsoSpace.gutter).padding(top = 8.dp, bottom = 12.dp)) {
-        if (task.isDone) {
-            SecondaryButton(stringResource(R.string.task_reopen), { vm.setDone(false) }, Modifier.fillMaxWidth())
-        } else {
-            PrimaryButton(stringResource(R.string.task_complete), { vm.setDone(true) }, Modifier.fillMaxWidth())
-        }
+    // ---------- Ação principal (fixa embaixo; em tela baixa ela já rolou junto, acima) ----------
+    if (!compact) {
+        Box(Modifier.fillMaxWidth().padding(horizontal = PulsoSpace.gutter).padding(top = 8.dp, bottom = 12.dp)) { mainAction() }
     }
 
     val dismiss = { sheet = null }

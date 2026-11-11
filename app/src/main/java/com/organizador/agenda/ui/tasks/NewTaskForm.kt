@@ -25,6 +25,7 @@ import com.organizador.agenda.R
 import com.organizador.agenda.domain.model.Priority
 import com.organizador.agenda.domain.time.PtBr
 import com.organizador.agenda.ui.common.PulsoTextField
+import com.organizador.agenda.ui.common.isCompactHeight
 import com.organizador.agenda.ui.pulso.components.LabelIcon
 import com.organizador.agenda.ui.pulso.components.PrimaryButton
 import com.organizador.agenda.ui.pulso.components.QuickChips
@@ -46,7 +47,8 @@ fun ColumnScope.NewTaskForm(
     val allTags by viewModel.tags.collectAsStateWithLifecycle()
     var draft by remember { mutableStateOf(NewTaskDraft(date = today.plusDays(dayOffset.toLong()))) }
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
+    // Em tela baixa (paisagem) o teclado cobriria a folha inteira: o foco fica por conta do usuário.
+    if (!isCompactHeight()) LaunchedEffect(Unit) { focus.requestFocus() }
 
     run {
         SectionLabel(stringResource(R.string.new_task_title), leading = { LabelIcon(Icons.Outlined.TaskAlt) })

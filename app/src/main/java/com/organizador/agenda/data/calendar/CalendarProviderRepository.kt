@@ -1,6 +1,7 @@
 package com.organizador.agenda.data.calendar
 
 import android.Manifest
+import android.accounts.Account
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
@@ -8,6 +9,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.database.Cursor
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.CalendarContract
@@ -222,12 +224,14 @@ class CalendarProviderRepository @Inject constructor(
         val eventId = ContentUris.parseId(uri)
         writeReminders(eventId, draft.reminderMinutes)
         draft.attendees.forEach { insertAttendee(eventId, it) }
+        requestSync(eventId)
         eventId
     }
 
     override suspend fun updateEvent(eventId: Long, draft: EventDraft): Unit = withContext(Dispatchers.IO) {
         resolver.update(ContentUris.withAppendedId(Events.CONTENT_URI, eventId), draft.toValues(), null, null)
         syncChildren(eventId, draft)
+        requestSync(eventId)
     }
 
     /** Troca os lembretes e ajusta os participantes do evento para os do rascunho. */
@@ -248,7 +252,38 @@ class CalendarProviderRepository @Inject constructor(
     }
 
     override suspend fun deleteEvent(eventId: Long): Unit = withContext(Dispatchers.IO) {
+        val account = accountOf(eventId)
         resolver.delete(ContentUris.withAppendedId(Events.CONTENT_URI, eventId), null, null)
+        requestSync(account)
+    }
+
+    /** Conta (nome, tipo) da agenda de um evento. */
+    private fun accountOf(eventId: Long): Account? =
+        resolver.query(
+            ContentUris.withAppendedId(Events.CONTENT_URI, eventId),
+            arrayOf(Events.ACCOUNT_NAME, Events.ACCOUNT_TYPE), null, null, null,
+        )?.use { c ->
+            if (c.moveToFirst() && !c.isNull(0) && !c.isNull(1)) Account(c.getString(0), c.getString(1)) else null
+        }
+
+    private fun requestSync(eventId: Long) = requestSync(accountOf(eventId))
+
+    /**
+     * Pede ao Android para sincronizar a agenda da conta agora. Sem isto a alteração sobe para
+     * o Google só quando o sistema decidir (pode levar minutos). Agendas locais não sincronizam.
+     */
+    private fun requestSync(account: Account?) {
+        if (account == null || account.type == CalendarContract.ACCOUNT_TYPE_LOCAL) return
+        runCatching {
+            ContentResolver.requestSync(
+                account,
+                CalendarContract.AUTHORITY,
+                Bundle().apply {
+                    putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
+                    putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
+                },
+            )
+        }
     }
 
     /*
@@ -265,6 +300,7 @@ class CalendarProviderRepository @Inject constructor(
                 put(Events.STATUS, Events.STATUS_CANCELED)
             },
         )
+        requestSync(eventId)
     }
 
     override suspend fun updateOccurrence(eventId: Long, instanceStart: Instant, draft: EventDraft): Long =
@@ -284,7 +320,10 @@ class CalendarProviderRepository @Inject constructor(
             val uri = resolver.insert(ContentUris.withAppendedId(Events.CONTENT_EXCEPTION_URI, eventId), values)
                 ?: error("O Calendar Provider recusou a alteração da ocorrência")
             // O provider copia lembretes e participantes da série para a exceção; ajusta para o rascunho.
-            ContentUris.parseId(uri).also { syncChildren(it, draft) }
+            ContentUris.parseId(uri).also {
+                syncChildren(it, draft)
+                requestSync(eventId)
+            }
         }
 
     override suspend fun updateSeries(eventId: Long, instanceStart: Instant, draft: EventDraft): Unit =
@@ -311,6 +350,7 @@ class CalendarProviderRepository @Inject constructor(
             }
             resolver.update(uri, values, null, null)
             syncChildren(eventId, draft)
+            requestSync(eventId)
         }
 
     private fun writeReminders(eventId: Long, minutes: List<Int>) {

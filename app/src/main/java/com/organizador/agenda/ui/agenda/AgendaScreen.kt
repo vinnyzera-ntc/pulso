@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -113,8 +116,13 @@ fun AgendaScreen(
         if (block.recurring) pendingMove = block to newStart else viewModel.move(block, newStart, EditScope.Single)
     }
 
-    // Agenda: sem aurora (tela densa, utilitária).
-    Column(Modifier.fillMaxSize().statusBarsPadding()) {
+    // Paisagem no celular (pouca altura): dois painéis. À esquerda, cabeçalho, navegação e a faixa
+    // da semana (ou a grade do mês); à direita, a linha do tempo (ou a lista do dia).
+    val config = LocalConfiguration.current
+    val twoPane = config.screenHeightDp < 480 && config.screenWidthDp > config.screenHeightDp
+    val ready = state.loaded && state.hasAccess
+
+    val header: @Composable () -> Unit = {
         ScreenHeader(title = state.title, eyebrow = state.eyebrow) {
             SegmentedPills(
                 options = listOf(
@@ -127,52 +135,94 @@ fun AgendaScreen(
                 modifier = Modifier.padding(end = 10.dp),
             )
         }
-        if (!state.loaded) return@Column
-        if (!state.hasAccess) {
-            Box(Modifier.fillMaxSize().padding(contentPadding).padding(horizontal = PulsoSpace.gutter), contentAlignment = Alignment.Center) {
-                PermissionPanel(permission, Icons.Outlined.EventAvailable, calendarPermissionCopy())
-            }
-            return@Column
-        }
-
+    }
+    // Navegador + faixa da semana (visão Semana) + chips de dia inteiro (Dia e Semana).
+    val controls: @Composable () -> Unit = {
         Navigator(state.navigatorLabel, showToday = state.selected != state.today, onStep = viewModel::step, onToday = viewModel::goToday)
+        if (state.mode == AgendaMode.Week) {
+            val onStep by rememberUpdatedState(viewModel::step)
+            var dragged by remember { mutableFloatStateOf(0f) }
+            WeekStrip(
+                days = state.weekDays,
+                selected = state.selected,
+                today = state.today,
+                onSelect = viewModel::select,
+                eventCount = { state.eventCounts[it] ?: 0 },
+                locale = PtBr.locale,
+                modifier = Modifier
+                    .padding(horizontal = PulsoSpace.gutter)
+                    .padding(top = 4.dp)
+                    // Deslizar a faixa troca de semana.
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures(
+                            onDragStart = { dragged = 0f },
+                            onHorizontalDrag = { _, amount -> dragged += amount },
+                            onDragEnd = { if (dragged > 80.dp.toPx()) onStep(-1) else if (dragged < -80.dp.toPx()) onStep(1) },
+                        )
+                    },
+            )
+        }
+        if (state.mode != AgendaMode.Month) AllDayRow(state.allDay, onClick = { allDayDetail = it })
+    }
+    val timeline: @Composable () -> Unit = {
+        TimelineScroller(state, contentPadding) {
+            AgendaTimeline(
+                blocks = state.blocks,
+                nowMinutes = state.nowMinutes,
+                onEventClick = { detail = it },
+                onEmptySlot = { minutes -> onNewEvent(viewModel.startAt(minutes)) },
+                onMove = onMove,
+                modifier = Modifier.padding(horizontal = PulsoSpace.gutter),
+            )
+        }
+    }
+    val permissionPanel: @Composable () -> Unit = {
+        Box(Modifier.fillMaxSize().padding(contentPadding).padding(horizontal = PulsoSpace.gutter), contentAlignment = Alignment.Center) {
+            PermissionPanel(permission, Icons.Outlined.EventAvailable, calendarPermissionCopy())
+        }
+    }
+    val bottomSpace = contentPadding.calculateBottomPadding() + 16.dp
 
-        when (state.mode) {
-            AgendaMode.Month -> MonthView(state, contentPadding, viewModel::select, onEventClick = { detail = it }, onAllDayClick = { allDayDetail = it })
-            else -> {
-                if (state.mode == AgendaMode.Week) {
-                    val onStep by rememberUpdatedState(viewModel::step)
-                    var dragged by remember { mutableFloatStateOf(0f) }
-                    WeekStrip(
-                        days = state.weekDays,
-                        selected = state.selected,
-                        today = state.today,
-                        onSelect = viewModel::select,
-                        eventCount = { state.eventCounts[it] ?: 0 },
-                        locale = PtBr.locale,
-                        modifier = Modifier
-                            .padding(horizontal = PulsoSpace.gutter)
-                            .padding(top = 4.dp)
-                            // Deslizar a faixa troca de semana.
-                            .pointerInput(Unit) {
-                                detectHorizontalDragGestures(
-                                    onDragStart = { dragged = 0f },
-                                    onHorizontalDrag = { _, amount -> dragged += amount },
-                                    onDragEnd = { if (dragged > 80.dp.toPx()) onStep(-1) else if (dragged < -80.dp.toPx()) onStep(1) },
-                                )
-                            },
-                    )
+    // Agenda: sem aurora (tela densa, utilitária).
+    if (twoPane) {
+        Row(Modifier.fillMaxSize().statusBarsPadding()) {
+            Column(Modifier.width(352.dp).fillMaxHeight().verticalScroll(rememberScrollState())) {
+                header()
+                if (ready) {
+                    controls()
+                    if (state.mode == AgendaMode.Month) MonthGrid(state, viewModel::select, Modifier.padding(horizontal = PulsoSpace.gutter))
                 }
-                AllDayRow(state.allDay, onClick = { allDayDetail = it })
-                TimelineScroller(state, contentPadding) {
-                    AgendaTimeline(
-                        blocks = state.blocks,
-                        nowMinutes = state.nowMinutes,
-                        onEventClick = { detail = it },
-                        onEmptySlot = { minutes -> onNewEvent(viewModel.startAt(minutes)) },
-                        onMove = onMove,
-                        modifier = Modifier.padding(horizontal = PulsoSpace.gutter),
-                    )
+                Spacer(Modifier.height(bottomSpace))
+            }
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                when {
+                    !state.loaded -> Unit
+                    !state.hasAccess -> permissionPanel()
+                    state.mode == AgendaMode.Month -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PulsoSpace.gutter)) {
+                        MonthDayList(state, onEventClick = { detail = it }, onAllDayClick = { allDayDetail = it })
+                        Spacer(Modifier.height(bottomSpace))
+                    }
+                    else -> timeline()
+                }
+            }
+        }
+    } else {
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            header()
+            when {
+                !state.loaded -> Unit
+                !state.hasAccess -> permissionPanel()
+                else -> {
+                    controls()
+                    if (state.mode == AgendaMode.Month) {
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PulsoSpace.gutter)) {
+                            MonthGrid(state, viewModel::select)
+                            MonthDayList(state, onEventClick = { detail = it }, onAllDayClick = { allDayDetail = it })
+                            Spacer(Modifier.height(bottomSpace))
+                        }
+                    } else {
+                        timeline()
+                    }
                 }
             }
         }
@@ -271,18 +321,12 @@ private fun TimelineScroller(state: AgendaUiState, contentPadding: PaddingValues
 
 // ---------- Mês ----------
 
+/** Grade do mês: iniciais dos dias da semana + uma célula por dia. */
 @Composable
-private fun MonthView(
-    state: AgendaUiState,
-    contentPadding: PaddingValues,
-    onSelect: (LocalDate) -> Unit,
-    onEventClick: (EventBlockUi) -> Unit,
-    onAllDayClick: (AllDayUi) -> Unit,
-) {
+private fun MonthGrid(state: AgendaUiState, onSelect: (LocalDate) -> Unit, modifier: Modifier = Modifier) {
     val c = Pulso.colors
     val month = YearMonth.from(state.selected)
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PulsoSpace.gutter)) {
-        // Cabeçalho com as iniciais dos dias da semana.
+    Column(modifier) {
         Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
             state.monthWeeks.firstOrNull()?.forEach { d ->
                 Text(
@@ -309,26 +353,30 @@ private fun MonthView(
                 }
             }
         }
+    }
+}
 
-        SectionLabel(PtBr.shortDate(state.selected), Modifier.padding(top = 16.dp, bottom = 8.dp))
-        if (state.blocks.isEmpty() && state.allDay.isEmpty()) {
-            Text(stringResource(R.string.agenda_empty_day), style = Pulso.type.bodyS, color = c.text2, modifier = Modifier.padding(vertical = 8.dp))
-        }
-        if (state.allDay.isNotEmpty()) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                state.allDay.forEach { e ->
-                    Box(Modifier.heightIn(min = 48.dp).clickable(role = Role.Button) { onAllDayClick(e) }, contentAlignment = Alignment.Center) {
-                        PulsoChip(e.title)
-                    }
+/** Compromissos do dia selecionado na visão Mês: chips de dia inteiro + blocos em lista. */
+@Composable
+private fun MonthDayList(state: AgendaUiState, onEventClick: (EventBlockUi) -> Unit, onAllDayClick: (AllDayUi) -> Unit) {
+    val c = Pulso.colors
+    SectionLabel(PtBr.shortDate(state.selected), Modifier.padding(top = 16.dp, bottom = 8.dp))
+    if (state.blocks.isEmpty() && state.allDay.isEmpty()) {
+        Text(stringResource(R.string.agenda_empty_day), style = Pulso.type.bodyS, color = c.text2, modifier = Modifier.padding(vertical = 8.dp))
+    }
+    if (state.allDay.isNotEmpty()) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            state.allDay.forEach { e ->
+                Box(Modifier.heightIn(min = 48.dp).clickable(role = Role.Button) { onAllDayClick(e) }, contentAlignment = Alignment.Center) {
+                    PulsoChip(e.title)
                 }
             }
         }
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            state.blocks.forEach { block ->
-                TimelineBlock(block, block.timeRange, dragging = false, onClick = { onEventClick(block) }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp))
-            }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        state.blocks.forEach { block ->
+            TimelineBlock(block, block.timeRange, dragging = false, onClick = { onEventClick(block) }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp))
         }
-        Spacer(Modifier.height(contentPadding.calculateBottomPadding() + 16.dp))
     }
 }
 
