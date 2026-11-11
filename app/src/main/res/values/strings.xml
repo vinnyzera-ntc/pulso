@@ -108,6 +108,44 @@
     <string name="task_missing_title">Tarefa não encontrada</string>
     <string name="task_missing_body">Ela pode ter sido excluída.</string>
 
+    <!-- Agenda -->
+    <string name="agenda_today">Hoje</string>
+    <string name="agenda_prev">Anterior</string>
+    <string name="agenda_next">Próximo</string>
+    <string name="agenda_all_day">Dia inteiro</string>
+    <string name="agenda_empty_day">Nenhum compromisso neste dia.</string>
+    <string name="msg_event_cancelled">Compromisso cancelado</string>
+    <string name="msg_event_moved">Remarcado para %1$s</string>
+
+    <!-- Compromisso -->
+    <string name="new_item_task">Tarefa</string>
+    <string name="new_item_event">Compromisso</string>
+    <string name="event_new_title">Novo compromisso</string>
+    <string name="event_edit_title">Editar compromisso</string>
+    <string name="event_title_placeholder">Título do compromisso</string>
+    <string name="event_duration">Duração</string>
+    <string name="event_unit_min">min</string>
+    <string name="event_location_placeholder">Local</string>
+    <string name="event_time_title">Horário de início</string>
+    <string name="event_cta_create">Agendar</string>
+    <string name="event_cta_save">Salvar</string>
+    <string name="event_missing">Este compromisso não existe mais.</string>
+    <string name="event_no_calendar">Nenhuma agenda aceita novos compromissos. Adicione uma conta Google nas configurações do Android.</string>
+    <string name="confirm_created">Compromisso agendado</string>
+    <string name="confirm_updated">Compromisso atualizado</string>
+    <string name="event_edit">Editar</string>
+    <string name="event_cancel">Cancelar compromisso</string>
+    <string name="event_repeats">Repete</string>
+    <string name="event_with">Com %1$s</string>
+    <string name="event_read_only">Agenda somente leitura: não dá para alterar este compromisso.</string>
+    <string name="event_all_day_note">Compromissos de dia inteiro aparecem aqui, mas são editados no Google Agenda.</string>
+    <string name="scope_title">Este compromisso se repete</string>
+    <string name="scope_only_this">Só este</string>
+    <string name="scope_series">Toda a série</string>
+    <string name="scope_move_body">Remarcar só esta ocorrência ou todas?</string>
+    <string name="scope_edit_body">Editar só esta ocorrência ou todas?</string>
+    <string name="scope_cancel_body">Cancelar só esta ocorrência ou todas?</string>
+
     <!-- Ajustes -->
     <string name="settings_section_agenda">Agenda</string>
     <string name="settings_section_visible">Agendas visíveis</string>
@@ -140,8 +178,6 @@
     <string name="perm_calendar_blocked_message">O Android não vai perguntar de novo. Para ver seus compromissos, ative Agenda em Permissões nas configurações do app.</string>
 
     <!-- Placeholders da fase 0 (substituídos nas próximas fases) -->
-    <string name="placeholder_agenda_title">Agenda em construção</string>
-    <string name="placeholder_agenda_body">As visões dia, semana e mês com o Google Agenda chegam na fase 3.</string>
     <string name="placeholder_focus_title">Nada em foco</string>
     <string name="placeholder_focus_body">O timer Pomodoro ligado a uma tarefa chega na fase 4.</string>
     <string name="placeholder_capture_body">O campo que entende português chega na fase 4.</string>

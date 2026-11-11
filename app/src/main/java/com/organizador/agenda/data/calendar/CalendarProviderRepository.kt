@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -49,6 +50,7 @@ import javax.inject.Singleton
 @Singleton
 class CalendarProviderRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
+    private val pending: PendingEventChanges,
 ) : CalendarRepository {
 
     private val resolver: ContentResolver get() = context.contentResolver
@@ -90,6 +92,8 @@ class CalendarProviderRepository @Inject constructor(
 
     override fun observeEvents(from: Instant, to: Instant, calendarIds: Set<Long>): Flow<List<CalendarEvent>> =
         changes().map { queryInstances(from, to, calendarIds) }.flowOn(Dispatchers.IO)
+            // Compromissos cancelados cujo "Desfazer" ainda não expirou não aparecem.
+            .combine(pending.hidden) { list, hidden -> list.filterNot { hidden.hides(it.eventId, it.instanceId) } }
 
     private fun queryCalendars(): List<DeviceCalendar> {
         if (!hasPermission()) return emptyList()
@@ -223,6 +227,11 @@ class CalendarProviderRepository @Inject constructor(
 
     override suspend fun updateEvent(eventId: Long, draft: EventDraft): Unit = withContext(Dispatchers.IO) {
         resolver.update(ContentUris.withAppendedId(Events.CONTENT_URI, eventId), draft.toValues(), null, null)
+        syncChildren(eventId, draft)
+    }
+
+    /** Troca os lembretes e ajusta os participantes do evento para os do rascunho. */
+    private fun syncChildren(eventId: Long, draft: EventDraft) {
         resolver.delete(Reminders.CONTENT_URI, "${Reminders.EVENT_ID} = ?", arrayOf(eventId.toString()))
         writeReminders(eventId, draft.reminderMinutes)
         // Participantes: só mexe na diferença, para não reenviar convite a quem já estava.
@@ -241,6 +250,68 @@ class CalendarProviderRepository @Inject constructor(
     override suspend fun deleteEvent(eventId: Long): Unit = withContext(Dispatchers.IO) {
         resolver.delete(ContentUris.withAppendedId(Events.CONTENT_URI, eventId), null, null)
     }
+
+    /*
+     * Eventos recorrentes. "Só este" cria uma exceção (CONTENT_EXCEPTION_URI) para a ocorrência
+     * que começa em instanceStart; "toda a série" altera a linha mestre, que guarda DTSTART da
+     * primeira ocorrência + DURATION (nunca DTEND).
+     */
+
+    override suspend fun cancelOccurrence(eventId: Long, instanceStart: Instant): Unit = withContext(Dispatchers.IO) {
+        resolver.insert(
+            ContentUris.withAppendedId(Events.CONTENT_EXCEPTION_URI, eventId),
+            ContentValues().apply {
+                put(Events.ORIGINAL_INSTANCE_TIME, instanceStart.toEpochMilli())
+                put(Events.STATUS, Events.STATUS_CANCELED)
+            },
+        )
+    }
+
+    override suspend fun updateOccurrence(eventId: Long, instanceStart: Instant, draft: EventDraft): Long =
+        withContext(Dispatchers.IO) {
+            val values = ContentValues().apply {
+                put(Events.ORIGINAL_INSTANCE_TIME, instanceStart.toEpochMilli())
+                // Sem isto o provider marca a exceção como "provisória".
+                put(Events.STATUS, Events.STATUS_CONFIRMED)
+                put(Events.TITLE, draft.title.trim())
+                put(Events.DESCRIPTION, draft.description)
+                put(Events.EVENT_LOCATION, draft.location.trim())
+                put(Events.EVENT_TIMEZONE, draft.timeZone.id)
+                put(Events.DTSTART, draft.start.toEpochMilli())
+                // O provider não aceita DTEND numa exceção: ele calcula o fim por DTSTART + DURATION.
+                put(Events.DURATION, "P${(draft.end.epochSecond - draft.start.epochSecond).coerceAtLeast(0)}S")
+            }
+            val uri = resolver.insert(ContentUris.withAppendedId(Events.CONTENT_EXCEPTION_URI, eventId), values)
+                ?: error("O Calendar Provider recusou a alteração da ocorrência")
+            // O provider copia lembretes e participantes da série para a exceção; ajusta para o rascunho.
+            ContentUris.parseId(uri).also { syncChildren(it, draft) }
+        }
+
+    override suspend fun updateSeries(eventId: Long, instanceStart: Instant, draft: EventDraft): Unit =
+        withContext(Dispatchers.IO) {
+            val uri = ContentUris.withAppendedId(Events.CONTENT_URI, eventId)
+            val master = resolver.query(uri, arrayOf(Events.DTSTART, Events.RRULE, Events.RDATE), null, null, null)?.use { c ->
+                if (c.moveToFirst()) Triple(c.getLong(0), c.getString(1), c.getString(2)) else null
+            } ?: return@withContext
+            // A série inteira anda o mesmo tanto que a ocorrência editada andou.
+            val shift = draft.start.toEpochMilli() - instanceStart.toEpochMilli()
+            val seconds = (draft.end.epochSecond - draft.start.epochSecond).coerceAtLeast(0)
+            val values = ContentValues().apply {
+                put(Events.TITLE, draft.title.trim())
+                put(Events.DESCRIPTION, draft.description)
+                put(Events.EVENT_LOCATION, draft.location.trim())
+                put(Events.HAS_ALARM, if (draft.reminderMinutes.isEmpty()) 0 else 1)
+                put(Events.DTSTART, master.first + shift)
+                put(Events.DURATION, "P${seconds}S")
+                putNull(Events.DTEND)
+                // Reenvia a regra junto: o provider só recalcula as ocorrências (e a última data)
+                // quando a atualização traz a recorrência completa.
+                master.second?.let { put(Events.RRULE, it) }
+                master.third?.let { put(Events.RDATE, it) }
+            }
+            resolver.update(uri, values, null, null)
+            syncChildren(eventId, draft)
+        }
 
     private fun writeReminders(eventId: Long, minutes: List<Int>) {
         minutes.distinct().forEach { m ->

@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -49,14 +48,10 @@ import com.organizador.agenda.ui.pulso.PulsoMotion
 import com.organizador.agenda.ui.pulso.components.BottomNavPill
 import com.organizador.agenda.ui.pulso.components.NavItem
 import com.organizador.agenda.ui.settings.SettingsScreen
-import com.organizador.agenda.ui.tasks.NewTaskSheet
 import com.organizador.agenda.ui.tasks.TaskDetailScreen
 import com.organizador.agenda.ui.tasks.TasksScreen
 import com.organizador.agenda.ui.today.TodayScreen
 import kotlinx.coroutines.flow.collectLatest
-
-/** Folha "Nova tarefa" aberta? Guarda o deslocamento em dias da data sugerida (0 = hoje). */
-private const val SHEET_CLOSED = -1
 
 @Composable
 fun PulsoNavHost(
@@ -78,16 +73,24 @@ fun PulsoNavHost(
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         appViewModel.messenger.messages.collectLatest { message ->
-            val result = snackbar.showSnackbar(
-                message = context.getString(message.text),
-                actionLabel = message.actionLabel?.let(context::getString),
-                duration = if (message.actionLabel != null) SnackbarDuration.Long else SnackbarDuration.Short,
-            )
-            if (result == SnackbarResult.ActionPerformed) appViewModel.messenger.runAction(message)
+            var actionTaken = false
+            try {
+                val result = snackbar.showSnackbar(
+                    message = context.getString(message.text, *message.args.toTypedArray()),
+                    actionLabel = message.actionLabel?.let(context::getString),
+                    duration = if (message.actionLabel != null) SnackbarDuration.Long else SnackbarDuration.Short,
+                )
+                actionTaken = result == SnackbarResult.ActionPerformed
+                if (actionTaken) appViewModel.messenger.runAction(message)
+            } finally {
+                // Também quando um aviso novo substitui este (a coleta é cancelada).
+                if (!actionTaken) appViewModel.messenger.runDismissed(message)
+            }
         }
     }
 
-    var newTaskDayOffset by rememberSaveable { mutableStateOf(SHEET_CLOSED) }
+    // Folha "Novo item" (tarefa ou compromisso) ou edição de compromisso; null = fechada.
+    var sheet by remember { mutableStateOf<SheetRequest?>(null) }
 
     val reduced = Pulso.reducedMotion
     val slidePx = with(LocalDensity.current) { 24.dp.roundToPx() }
@@ -113,7 +116,10 @@ fun PulsoNavHost(
                     items = TopLevel.entries.map { NavItem(stringResource(it.label), it.icon) },
                     selectedIndex = currentTab.ordinal,
                     onSelect = { i -> navController.navigateToTab(TopLevel.entries[i]) },
-                    onCreate = { newTaskDayOffset = 0 },
+                    // Na Agenda o + começa em compromisso; nas outras abas, em tarefa.
+                    onCreate = {
+                        sheet = SheetRequest.Create(if (currentTab == TopLevel.Agenda) NewItemKind.Event else NewItemKind.Task)
+                    },
                     createLabel = stringResource(R.string.action_new_item),
                     onCreateLongPress = { navController.navigate(CaptureRoute) },
                     createLongPressLabel = stringResource(R.string.action_quick_capture),
@@ -142,12 +148,18 @@ fun PulsoNavHost(
                     onOpenAgenda = { navController.navigateToTab(TopLevel.Agenda) },
                     onOpenTasks = { navController.navigateToTab(TopLevel.Tasks) },
                     onOpenTask = openTask,
-                    onPlanTomorrow = { newTaskDayOffset = 1 },
+                    onPlanTomorrow = { sheet = SheetRequest.Create(NewItemKind.Task, taskDayOffset = 1) },
                 )
             }
-            composable<AgendaRoute> { AgendaScreen(contentPadding = PaddingValues(bottom = pillHeight)) }
+            composable<AgendaRoute> {
+                AgendaScreen(
+                    contentPadding = PaddingValues(bottom = pillHeight),
+                    onNewEvent = { start -> sheet = SheetRequest.Create(NewItemKind.Event, eventStart = start) },
+                    onEditEvent = { target -> sheet = SheetRequest.EditEvent(target) },
+                )
+            }
             composable<TasksRoute> {
-                TasksScreen(contentPadding = PaddingValues(bottom = pillHeight), onOpenTask = openTask, onNewTask = { newTaskDayOffset = 0 })
+                TasksScreen(contentPadding = PaddingValues(bottom = pillHeight), onOpenTask = openTask, onNewTask = { sheet = SheetRequest.Create(NewItemKind.Task) })
             }
             composable<FocusRoute> { FocusScreen(contentPadding = PaddingValues(bottom = pillHeight)) }
             composable<SettingsRoute> { SettingsScreen(onBack = { navController.popBackStack() }) }
@@ -156,9 +168,7 @@ fun PulsoNavHost(
         }
     }
 
-    if (newTaskDayOffset != SHEET_CLOSED) {
-        NewTaskSheet(dayOffset = newTaskDayOffset, onDismiss = { newTaskDayOffset = SHEET_CLOSED })
-    }
+    sheet?.let { request -> NewItemSheet(request, onDismiss = { sheet = null }) }
 }
 
 private fun NavHostController.navigateToTab(tab: TopLevel) {

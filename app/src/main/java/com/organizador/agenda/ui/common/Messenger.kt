@@ -35,6 +35,14 @@ import javax.inject.Singleton
 data class UiMessage(
     @param:StringRes val text: Int,
     @param:StringRes val actionLabel: Int? = null,
+    /** Argumentos de formatação do texto. */
+    val args: List<Any> = emptyList(),
+    /**
+     * Roda quando o aviso sai da tela sem a ação ter sido tocada (tempo esgotado, dispensado ou
+     * substituído por outro aviso). Serve para efetivar algo que ficou "em espera" pelo Desfazer.
+     */
+    val onDismissed: (suspend () -> Unit)? = null,
+    /** A ação do botão (por último, para poder ser passada como lambda final). */
     val action: (suspend () -> Unit)? = null,
 )
 
@@ -55,6 +63,11 @@ class Messenger @Inject constructor(@param:ApplicationScope private val scope: C
     fun runAction(message: UiMessage) {
         val action = message.action ?: return
         scope.launch { action() }
+    }
+
+    fun runDismissed(message: UiMessage) {
+        val onDismissed = message.onDismissed ?: return
+        scope.launch { onDismissed() }
     }
 }
 

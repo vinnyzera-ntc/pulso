@@ -118,9 +118,22 @@ class FakeCalendarRepository(
     override fun observeEvents(from: Instant, to: Instant, calendarIds: Set<Long>): Flow<List<CalendarEvent>> =
         events.map { list -> list.filter { it.calendarId in calendarIds && it.end > from && it.start < to } }
     override suspend fun getEvent(eventId: Long): EventDetails? = details[eventId]
-    override suspend fun createEvent(draft: EventDraft): Long = 0
-    override suspend fun updateEvent(eventId: Long, draft: EventDraft) = Unit
-    override suspend fun deleteEvent(eventId: Long) = Unit
+    /** Registro das escritas, na ordem: "create", "update:5", "delete:5", "cancelOccurrence:5", ... */
+    val writes = mutableListOf<String>()
+    var lastDraft: EventDraft? = null
+
+    override suspend fun createEvent(draft: EventDraft): Long {
+        writes += "create"; lastDraft = draft
+        return 100
+    }
+    override suspend fun updateEvent(eventId: Long, draft: EventDraft) { writes += "update:$eventId"; lastDraft = draft }
+    override suspend fun deleteEvent(eventId: Long) { writes += "delete:$eventId" }
+    override suspend fun cancelOccurrence(eventId: Long, instanceStart: Instant) { writes += "cancelOccurrence:$eventId" }
+    override suspend fun updateOccurrence(eventId: Long, instanceStart: Instant, draft: EventDraft): Long {
+        writes += "updateOccurrence:$eventId"; lastDraft = draft
+        return 200
+    }
+    override suspend fun updateSeries(eventId: Long, instanceStart: Instant, draft: EventDraft) { writes += "updateSeries:$eventId"; lastDraft = draft }
 }
 
 fun deviceCalendar(id: Long, google: Boolean = true, primary: Boolean = false, visible: Boolean = true, write: Boolean = true, name: String = "C$id", account: String = "eu@gmail.com") =

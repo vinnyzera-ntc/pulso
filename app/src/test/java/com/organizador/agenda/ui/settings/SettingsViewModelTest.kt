@@ -129,5 +129,8 @@ class SettingsViewModelTest {
         override suspend fun createEvent(draft: EventDraft): Long = 0
         override suspend fun updateEvent(eventId: Long, draft: EventDraft) = Unit
         override suspend fun deleteEvent(eventId: Long) = Unit
+        override suspend fun cancelOccurrence(eventId: Long, instanceStart: Instant) = Unit
+        override suspend fun updateOccurrence(eventId: Long, instanceStart: Instant, draft: EventDraft): Long = 0
+        override suspend fun updateSeries(eventId: Long, instanceStart: Instant, draft: EventDraft) = Unit
     }
 }

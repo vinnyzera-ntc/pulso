@@ -12,6 +12,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
 import com.organizador.agenda.data.calendar.CalendarProviderRepository
+import com.organizador.agenda.data.calendar.PendingEventChanges
 import com.organizador.agenda.domain.model.Attendee
 import com.organizador.agenda.domain.model.EventDraft
 import kotlinx.coroutines.flow.first
@@ -43,7 +44,7 @@ class CalendarProviderRepositoryTest {
         GrantPermissionRule.grant(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val repo = CalendarProviderRepository(context)
+    private val repo = CalendarProviderRepository(context, PendingEventChanges())
     private val zone = ZoneId.systemDefault()
     private var calendarId = -1L
 
@@ -161,6 +162,77 @@ class CalendarProviderRepositoryTest {
         assertTrue(repo.observeEvents(dayStart, dayEnd, setOf(-42L)).first().isEmpty())
         assertNull(repo.getEvent(Long.MAX_VALUE))
         assertNotNull(repo.observeEvents(dayStart, dayEnd, setOf(calendarId)).first().singleOrNull())
+    }
+
+    /** Série diária de 5 ocorrências de 1 h, começando amanhã às [hour]h. */
+    private fun insertDailySeries(title: String, hour: Int): Long {
+        val uri = context.contentResolver.insert(
+            CalendarContract.Events.CONTENT_URI,
+            ContentValues().apply {
+                put(CalendarContract.Events.CALENDAR_ID, calendarId)
+                put(CalendarContract.Events.TITLE, title)
+                put(CalendarContract.Events.DTSTART, at(hour).toEpochMilli())
+                put(CalendarContract.Events.DURATION, "PT1H")
+                put(CalendarContract.Events.RRULE, "FREQ=DAILY;COUNT=5")
+                put(CalendarContract.Events.EVENT_TIMEZONE, zone.id)
+            },
+        )
+        return ContentUris.parseId(uri!!)
+    }
+
+    private val seriesEnd get() = tomorrow.plusDays(6).atStartOfDay(zone).toInstant()
+    private suspend fun series() = repo.observeEvents(dayStart, seriesEnd, setOf(calendarId)).first()
+    private fun day(n: Long, h: Int, m: Int = 0) = tomorrow.plusDays(n).atTime(h, m).atZone(zone).toInstant()
+
+    @Test
+    fun recorrente_soEste_cancelarEAlterar() = runTest {
+        val id = insertDailySeries("Daily", 9)
+        val all = series()
+        assertEquals(5, all.size)
+        assertTrue(all.all { it.isRecurring && it.eventId == id })
+        assertEquals(day(1, 10), all[1].end)
+
+        // Cancelar só a 2ª ocorrência.
+        repo.cancelOccurrence(id, all[1].start)
+        assertEquals(listOf(day(0, 9), day(2, 9), day(3, 9), day(4, 9)), series().map { it.start })
+
+        // Alterar só a 3ª: 9h -> 14h–15h30, com outro título e lembrete.
+        val draft = EventDraft(
+            calendarId = calendarId, title = "Daily (remarcada)", start = day(2, 14), end = day(2, 15, 30),
+            timeZone = zone, location = "Sala 2", reminderMinutes = listOf(5),
+        )
+        val exceptionId = repo.updateOccurrence(id, day(2, 9), draft)
+        val after = series()
+        assertEquals(4, after.size)
+        val moved = after.single { it.eventId == exceptionId }
+        assertEquals("Daily (remarcada)", moved.title)
+        assertEquals(day(2, 14), moved.start)
+        assertEquals(day(2, 15, 30), moved.end)
+        assertEquals("Sala 2", moved.location)
+        assertFalse("a exceção é um evento avulso", moved.isRecurring)
+        assertEquals(listOf(5), repo.getEvent(exceptionId)!!.reminderMinutes)
+        // As demais continuam na série, às 9h, com o título antigo.
+        assertEquals(listOf(day(0, 9), day(3, 9), day(4, 9)), after.filter { it.eventId == id }.map { it.start })
+        assertTrue(after.filter { it.eventId == id }.all { it.title == "Daily" })
+    }
+
+    @Test
+    fun recorrente_todaASerie_andaJuntoEMantemDuracao() = runTest {
+        val id = insertDailySeries("Standup", 9)
+        // Edita a partir da 3ª ocorrência: 9h–10h -> 9h30–10h15.
+        repo.updateSeries(
+            id, day(2, 9),
+            EventDraft(calendarId = calendarId, title = "Standup novo", start = day(2, 9, 30), end = day(2, 10, 15), timeZone = zone),
+        )
+        val all = series()
+        assertEquals(5, all.size)
+        assertEquals((0L..4L).map { day(it, 9, 30) }, all.map { it.start })
+        assertEquals((0L..4L).map { day(it, 10, 15) }, all.map { it.end })
+        assertTrue(all.all { it.title == "Standup novo" && it.isRecurring })
+        // getEvent de recorrente calcula o fim pela duração.
+        val details = repo.getEvent(id)!!
+        assertEquals(day(0, 10, 15), details.event.end)
+        assertNotNull(details.rrule)
     }
 
     companion object {

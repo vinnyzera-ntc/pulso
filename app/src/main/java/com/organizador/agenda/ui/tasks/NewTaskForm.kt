@@ -2,6 +2,7 @@ package com.organizador.agenda.ui.tasks
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -23,7 +24,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.organizador.agenda.R
 import com.organizador.agenda.domain.model.Priority
 import com.organizador.agenda.domain.time.PtBr
-import com.organizador.agenda.ui.common.PulsoBottomSheet
 import com.organizador.agenda.ui.common.PulsoTextField
 import com.organizador.agenda.ui.pulso.components.LabelIcon
 import com.organizador.agenda.ui.pulso.components.PrimaryButton
@@ -31,15 +31,15 @@ import com.organizador.agenda.ui.pulso.components.QuickChips
 import com.organizador.agenda.ui.pulso.components.SectionLabel
 
 /**
- * Folha "Nova tarefa" (variante de tarefa do padrão Novo item): título, quando, prioridade,
+ * Formulário "Nova tarefa", conteúdo da folha Novo item (variante de tarefa do padrão Novo item): título, quando, prioridade,
  * lembrete, etiquetas e um botão que diz o resultado ("Criar tarefa · Amanhã, 09:00").
  *
  * @param dayOffset data sugerida, em dias a partir de hoje (0 = hoje, 1 = amanhã).
  */
 @Composable
-fun NewTaskSheet(
+fun ColumnScope.NewTaskForm(
     dayOffset: Int,
-    onDismiss: () -> Unit,
+    onDone: () -> Unit,
     viewModel: NewTaskViewModel = hiltViewModel(),
 ) {
     val today = remember { viewModel.today() }
@@ -48,7 +48,7 @@ fun NewTaskSheet(
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
 
-    PulsoBottomSheet(onDismiss) {
+    run {
         SectionLabel(stringResource(R.string.new_task_title), leading = { LabelIcon(Icons.Outlined.TaskAlt) })
 
         PulsoTextField(
@@ -97,7 +97,7 @@ fun NewTaskSheet(
             text = stringResource(R.string.new_task_cta) + whenText,
             onClick = {
                 viewModel.create(draft)
-                onDismiss()
+                onDone()
             },
             enabled = draft.isValid,
             modifier = Modifier.fillMaxWidth().padding(top = 6.dp),

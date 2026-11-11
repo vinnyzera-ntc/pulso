@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -116,7 +117,9 @@ fun SegmentedPills(
                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(9.dp))
                     .background(if (on) c.surface4 else Color.Transparent)
                     .selectable(selected = on, role = Role.Tab) { onSelect(i) }
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 42.dp)
                     .padding(horizontal = 11.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center,
             ) { Text(label, style = Pulso.type.meta, color = if (on) c.text else c.text3) }
         }
     }

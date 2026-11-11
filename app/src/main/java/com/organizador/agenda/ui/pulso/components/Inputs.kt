@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -64,7 +67,8 @@ fun BigNumberField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         decorationBox = { inner ->
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Box {
+                // Largura do próprio número (não a linha toda), para a unidade ficar colada nele.
+                Box(Modifier.width(IntrinsicSize.Min).widthIn(min = 28.dp)) {
                     if (value.isEmpty()) Text(placeholder, style = Pulso.type.displayL, color = c.text3)
                     inner()
                 }

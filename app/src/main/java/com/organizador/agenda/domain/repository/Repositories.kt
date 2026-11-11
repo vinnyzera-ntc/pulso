@@ -66,6 +66,15 @@ interface CalendarRepository {
     suspend fun createEvent(draft: EventDraft): Long
     suspend fun updateEvent(eventId: Long, draft: EventDraft)
     suspend fun deleteEvent(eventId: Long)
+
+    /** Recorrente, "só este": cancela a ocorrência que começa em [instanceStart]. */
+    suspend fun cancelOccurrence(eventId: Long, instanceStart: Instant)
+
+    /** Recorrente, "só este": altera só a ocorrência que começa em [instanceStart]. Devolve o id da exceção. */
+    suspend fun updateOccurrence(eventId: Long, instanceStart: Instant, draft: EventDraft): Long
+
+    /** Recorrente, "toda a série": aplica o rascunho (feito sobre a ocorrência de [instanceStart]) à série. */
+    suspend fun updateSeries(eventId: Long, instanceStart: Instant, draft: EventDraft)
 }
 
 interface SettingsRepository {

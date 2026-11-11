@@ -140,6 +140,46 @@ class DebugSeeder @Inject constructor(
         }
         if (liveNow) event("Alinhamento semanal do projeto", -25, 60, "Sala 3 · Prédio B")
         event("Conversa com a Ana sobre o orçamento", if (liveNow) 90 else 25, 45, "Google Meet")
+
+        // Horários fixos de hoje, para a Agenda: dois sobrepostos, um de dia inteiro e uma série diária.
+        val today = LocalDateTime.now(clock).toLocalDate()
+        fun at(daysFromToday: Long, h: Int, m: Int = 0) =
+            today.plusDays(daysFromToday).atTime(h, m).atZone(clock.zone).toInstant().toEpochMilli()
+        fun fixed(title: String, start: Long, end: Long, location: String? = null, extra: ContentValues.() -> Unit = {}) {
+            resolver.insert(
+                Events.CONTENT_URI,
+                ContentValues().apply {
+                    put(Events.CALENDAR_ID, calendarId)
+                    put(Events.TITLE, title)
+                    put(Events.DTSTART, start)
+                    put(Events.DTEND, end)
+                    put(Events.EVENT_TIMEZONE, clock.zone.id)
+                    location?.let { put(Events.EVENT_LOCATION, it) }
+                    extra()
+                },
+            )
+        }
+        fixed("Almoço com a equipe", at(0, 12), at(0, 13), "Cantina da Praça")
+        fixed("Ligação com o fornecedor", at(0, 12, 30), at(0, 13, 15))
+        fixed("Dentista", at(1, 15), at(1, 16), "Clínica Sorriso")
+        fixed("Revisão trimestral", at(3, 10), at(3, 11, 30), "Sala 3 · Prédio B")
+        val utcMidnight = today.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+        fixed("Aniversário da Carol", utcMidnight, utcMidnight + 86_400_000) {
+            put(Events.ALL_DAY, 1)
+            put(Events.EVENT_TIMEZONE, "UTC")
+        }
+        // Série: todo dia às 09:00 por 15 min, 10 ocorrências a partir de ontem.
+        resolver.insert(
+            Events.CONTENT_URI,
+            ContentValues().apply {
+                put(Events.CALENDAR_ID, calendarId)
+                put(Events.TITLE, "Standup diário")
+                put(Events.DTSTART, at(-1, 9))
+                put(Events.DURATION, "PT15M")
+                put(Events.RRULE, "FREQ=DAILY;COUNT=10")
+                put(Events.EVENT_TIMEZONE, clock.zone.id)
+            },
+        )
     }
 
     private fun asSyncAdapter(uri: Uri): Uri = uri.buildUpon()
