@@ -6,6 +6,16 @@
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
+    <!-- Modo foco: serviço em primeiro plano com o timer na notificação (continua com a tela apagada). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Alarme exato para o fim da sessão de foco (e, na fase 5, lembretes de tarefas). -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+
     <application
         android:name=".PulsoApp"
         android:allowBackup="true"
@@ -28,6 +38,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".focus.FocusService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Timer de foco (Pomodoro) iniciado pelo usuário, com contagem na notificação" />
+        </service>
+
+        <receiver
+            android:name=".focus.FocusAlarmReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

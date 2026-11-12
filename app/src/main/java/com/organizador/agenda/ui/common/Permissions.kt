@@ -137,6 +137,8 @@ fun PermissionPanel(
     icon: ImageVector,
     copy: PermissionCopy,
     modifier: Modifier = Modifier,
+    /** false quando a tela já tem a sua ação principal (ember): o pedido vira botão secundário. */
+    primaryRequest: Boolean = true,
 ) {
     val c = Pulso.colors
     val (title, message) = when (request.status) {
@@ -157,7 +159,8 @@ fun PermissionPanel(
                 SecondaryButton(copy.openSettingsLabel, onClick = request.openSettings, modifier = Modifier.fillMaxWidth())
             PermissionStatus.Granted -> Unit
             else ->
-                PrimaryButton(copy.requestLabel, onClick = request.launch, modifier = Modifier.fillMaxWidth())
+                if (primaryRequest) PrimaryButton(copy.requestLabel, onClick = request.launch, modifier = Modifier.fillMaxWidth())
+                else SecondaryButton(copy.requestLabel, onClick = request.launch, modifier = Modifier.fillMaxWidth())
         }
     }
 }

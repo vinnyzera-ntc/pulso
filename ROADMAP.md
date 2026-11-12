@@ -10,7 +10,7 @@ App pessoal de produtividade, de uso individual (instalação direta, sem Play S
 | 1 | Dados (Room), Google Agenda via Calendar Provider, Ajustes e permissões | Concluída |
 | 2 | Hoje e Tarefas | Concluída |
 | 3 | Agenda (dia, semana, mês) e compromissos | Concluída |
-| 4 | Captura rápida (parser pt-BR local) e Modo foco | A fazer |
+| 4 | Captura rápida (parser pt-BR local) e Modo foco | Concluída |
 | 5 | Lembretes de tarefas, acabamento e revisão | A fazer |
 
 ## Depois da v1

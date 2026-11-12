@@ -1,5 +1,6 @@
 package com.organizador.agenda.ui.pulso.components
 
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -31,7 +32,7 @@ import com.organizador.agenda.ui.pulso.PulsoMotion
 
 /**
  * Focus orbit (riff 01 Electro Wave): hairline tracks run in from both screen edges and curve into
- * a central timer pill; every 2.4s volt light pulses travel along them and "charge" the pill.
+ * a central timer pill; volt light flows along them continuously and keeps the pill "charged".
  * Fill the screen with it (background = Pulso.colors.deep); put labels/buttons on top.
  *
  * @param centerFraction vertical position of the pill (0..1 of the box height).
@@ -45,8 +46,10 @@ fun FocusOrbit(
 ) {
     val c = Pulso.colors
     val reduced = Pulso.reducedMotion
+    // Fluxo contínuo (pedido do usuário, diferente do "pulso a cada 2,4s" original do kit): a luz
+    // corre em velocidade constante e cada trilho sempre tem um pulso visível, sem "batidas".
     val t by rememberInfiniteTransition(label = "orbit").animateFloat(
-        0f, 1f, infiniteRepeatable(tween(PulsoMotion.PULSE, easing = PulsoMotion.Pulse), RepeatMode.Restart), label = "p",
+        0f, 1f, infiniteRepeatable(tween(PulsoMotion.PULSE * 2, easing = LinearEasing), RepeatMode.Restart), label = "p",
     )
     val animate = running && !reduced
     BoxWithConstraints(modifier.fillMaxSize()) {
@@ -73,23 +76,27 @@ fun FocusOrbit(
                 listOf(left, right).forEachIndexed { side, path ->
                     drawPath(path, c.lineStrong.copy(alpha = 0.8f), style = Stroke(1.2.dp.toPx()))
                     if (animate) {
-                        val phase = ((t + i * 0.13f + side * 0.07f) % 1f)
                         measure.setPath(path, false)
                         val len = measure.length
                         val segLen = len * 0.09f
-                        val end = len * phase
-                        val start = (end - segLen).coerceAtLeast(0f)
-                        val alpha = when { phase < 0.1f -> phase / 0.1f; phase > 0.9f -> (1f - phase) / 0.1f; else -> 1f }
-                        seg.reset()
-                        if (measure.getSegment(start, end, seg, true)) {
-                            drawPath(seg, c.voltGlow.copy(alpha = 0.35f * alpha), style = Stroke(7.dp.toPx(), cap = StrokeCap.Round))
-                            drawPath(seg, c.volt.copy(alpha = alpha), style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
+                        // Dois pulsos por trilho, meio ciclo separados: quando um chega ao timer, o outro já vem vindo.
+                        repeat(2) { k ->
+                            val phase = ((t + i * 0.13f + side * 0.07f + k * 0.5f) % 1f)
+                            val end = len * phase
+                            val start = (end - segLen).coerceAtLeast(0f)
+                            val alpha = when { phase < 0.1f -> phase / 0.1f; phase > 0.9f -> (1f - phase) / 0.1f; else -> 1f }
+                            seg.reset()
+                            if (measure.getSegment(start, end, seg, true)) {
+                                drawPath(seg, c.voltGlow.copy(alpha = 0.35f * alpha), style = Stroke(7.dp.toPx(), cap = StrokeCap.Round))
+                                drawPath(seg, c.volt.copy(alpha = alpha), style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
+                            }
                         }
                     }
                 }
             }
         }
-        val charge = if (animate) ((t - 0.70f) / 0.16f).coerceIn(0f, 1f) * (1f - ((t - 0.86f) / 0.14f).coerceIn(0f, 1f)) else 0f
+        // Brilho estável no timer enquanto roda (antes ele "piscava" a cada chegada dos pulsos).
+        val charge = if (animate) 0.55f else 0f
         Box(
             Modifier
                 .align(Alignment.TopCenter)

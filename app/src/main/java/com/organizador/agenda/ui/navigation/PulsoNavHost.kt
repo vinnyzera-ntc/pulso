@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -61,6 +62,8 @@ import kotlinx.coroutines.flow.collectLatest
 fun PulsoNavHost(
     startRoute: Any? = null,
     seedMode: String? = null,
+    /** Muda a cada toque na notificação do foco com o app já aberto: leva para a aba Foco. */
+    openFocusSignal: Int = 0,
     navController: NavHostController = rememberNavController(),
     appViewModel: AppViewModel = hiltViewModel(),
 ) {
@@ -71,6 +74,10 @@ fun PulsoNavHost(
         destination?.hierarchy?.any { it.hasRoute(tab.route::class) } == true
     }
     LaunchedEffect(seedMode) { seedMode?.let(appViewModel::seedOnce) }
+    LaunchedEffect(openFocusSignal) { if (openFocusSignal > 0) navController.navigateToTab(TopLevel.Focus) }
+    val focusActive by appViewModel.focusActive.collectAsStateWithLifecycle()
+    // Durante uma sessão, a aba Foco é tela cheia (sem nav pill); "voltar" leva ao Hoje e o timer segue.
+    val showNav = currentTab != null && !(currentTab == TopLevel.Focus && focusActive)
 
     // Mensagens (snackbar): uma nova substitui a que estiver na tela.
     val snackbar = remember { SnackbarHostState() }
@@ -113,10 +120,10 @@ fun PulsoNavHost(
         contentWindowInsets = WindowInsets(0),
         snackbarHost = {
             // Com o nav pill, o Scaffold já põe o snackbar acima dele; sem ele, sobe da barra de gestos.
-            PulsoSnackbarHost(snackbar, if (currentTab == null) Modifier.navigationBarsPadding().imePadding() else Modifier)
+            PulsoSnackbarHost(snackbar, if (!showNav) Modifier.navigationBarsPadding().imePadding() else Modifier)
         },
         bottomBar = {
-            if (currentTab != null) {
+            if (showNav) {
                 BottomNavPill(
                     items = TopLevel.entries.map { NavItem(stringResource(it.label), it.icon) },
                     selectedIndex = currentTab.ordinal,
@@ -170,7 +177,12 @@ fun PulsoNavHost(
             composable<FocusRoute> { FocusScreen(contentPadding = PaddingValues(bottom = pillHeight)) }
             composable<SettingsRoute> { SettingsScreen(onBack = { navController.popBackStack() }) }
             composable<CaptureRoute> { CaptureScreen(onClose = { navController.popBackStack() }) }
-            composable<TaskDetailRoute> { TaskDetailScreen(onBack = { navController.popBackStack() }) }
+            composable<TaskDetailRoute> {
+                TaskDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onFocus = { navController.navigateToTab(TopLevel.Focus) },
+                )
+            }
         }
     }
 

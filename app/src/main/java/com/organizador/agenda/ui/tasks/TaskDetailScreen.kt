@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Close
@@ -86,7 +87,7 @@ import java.time.LocalDateTime
 private enum class DetailSheet { When, Priority, Tags, Reminder }
 
 @Composable
-fun TaskDetailScreen(onBack: () -> Unit, viewModel: TaskDetailViewModel = hiltViewModel()) {
+fun TaskDetailScreen(onBack: () -> Unit, onFocus: () -> Unit, viewModel: TaskDetailViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.close.collect { onBack() } }
 
@@ -94,8 +95,21 @@ fun TaskDetailScreen(onBack: () -> Unit, viewModel: TaskDetailViewModel = hiltVi
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp).padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             RoundIconButton(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.action_back), onBack)
-            if (state.task != null) {
-                RoundIconButton(Icons.Outlined.DeleteOutline, stringResource(R.string.task_delete), { viewModel.delete() })
+            val current = state.task
+            if (current != null) {
+                Row {
+                    if (!current.isDone) {
+                        RoundIconButton(
+                            Icons.Outlined.Bolt,
+                            stringResource(R.string.task_focus),
+                            onClick = {
+                                viewModel.selectForFocus()
+                                onFocus()
+                            },
+                        )
+                    }
+                    RoundIconButton(Icons.Outlined.DeleteOutline, stringResource(R.string.task_delete), { viewModel.delete() })
+                }
             }
         }
         val task = state.task

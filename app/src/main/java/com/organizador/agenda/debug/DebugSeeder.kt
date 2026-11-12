@@ -12,7 +12,10 @@ import com.organizador.agenda.domain.model.Subtask
 import com.organizador.agenda.domain.model.Tag
 import com.organizador.agenda.domain.model.Task
 import com.organizador.agenda.domain.model.TaskReminder
+import com.organizador.agenda.domain.model.FocusSettings
 import com.organizador.agenda.domain.repository.CalendarRepository
+import com.organizador.agenda.domain.repository.SettingsRepository
+import kotlinx.coroutines.flow.first
 import com.organizador.agenda.domain.repository.TaskRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +33,9 @@ import javax.inject.Singleton
  * `-e seed <modo>` da MainActivity:
  *  - `demo`: tarefas de exemplo + agenda local "Pulso Teste" com um compromisso acontecendo agora;
  *  - `demo-proximo`: igual, mas o primeiro compromisso começa em 25 min;
+ *  - `foco:<min>`: encurta o foco e as pausas para testar o timer (ex.: `foco:1`); guarda os
+ *    valores do usuário e os devolve no `limpar`. Não mexe em tarefas nem na agenda.
+ *  - `recentes`: apaga as frases recentes da Captura rápida (usadas nos testes).
  *  - `limpar`: remove exatamente o que o seeder criou (ids guardados), nada mais.
  *
  * A agenda "Pulso Teste" é LOCAL (não sincroniza com o Google).
@@ -39,11 +45,20 @@ class DebugSeeder @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val tasks: TaskRepository,
     private val calendar: CalendarRepository,
+    private val settings: SettingsRepository,
     private val clock: Clock,
 ) {
     private val prefs get() = context.getSharedPreferences("debug_seed", Context.MODE_PRIVATE)
 
     suspend fun run(mode: String) = withContext(Dispatchers.IO) {
+        if (mode == "recentes") {
+            settings.clearRecentCaptures()
+            return@withContext
+        }
+        if (mode.startsWith("foco:")) {
+            shortFocus(mode.substringAfter(':').toIntOrNull() ?: 1)
+            return@withContext
+        }
         clear()
         if (mode == "demo" || mode == "demo-proximo") {
             seedTasks()
@@ -52,7 +67,20 @@ class DebugSeeder @Inject constructor(
         calendar.refresh()
     }
 
+    /** Foco de [minutes] min, pausas de 1 min e ciclo de 2 sessões. Guarda os valores atuais uma vez só. */
+    private suspend fun shortFocus(minutes: Int) {
+        if (!prefs.contains(KEY_FOCUS)) {
+            val f = settings.settings.first().focus
+            prefs.edit().putString(KEY_FOCUS, "${f.focusMinutes},${f.shortBreakMinutes},${f.longBreakMinutes},${f.sessionsBeforeLongBreak}").apply()
+        }
+        settings.setFocus(FocusSettings(focusMinutes = minutes, shortBreakMinutes = 1, longBreakMinutes = 1, sessionsBeforeLongBreak = 2))
+    }
+
     private suspend fun clear() {
+        prefs.getString(KEY_FOCUS, null)?.split(',')?.mapNotNull { it.toIntOrNull() }?.takeIf { it.size == 4 }?.let { (a, b, c, d) ->
+            settings.setFocus(FocusSettings(a, b, c, d))
+        }
+        prefs.edit().remove(KEY_FOCUS).apply()
         prefs.getStringSet(KEY_TASKS, emptySet()).orEmpty().forEach { tasks.delete(it.toLong()) }
         prefs.edit().remove(KEY_TASKS).apply()
         if (calendar.hasPermission()) {
@@ -191,5 +219,6 @@ class DebugSeeder @Inject constructor(
     private companion object {
         const val ACCOUNT = "Pulso Teste"
         const val KEY_TASKS = "task_ids"
+        const val KEY_FOCUS = "focus_settings"
     }
 }

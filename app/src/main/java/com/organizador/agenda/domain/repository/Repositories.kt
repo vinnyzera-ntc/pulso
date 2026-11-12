@@ -86,4 +86,12 @@ interface SettingsRepository {
     suspend fun setEventReminderMinutes(minutes: Int)
     suspend fun setWeekStart(day: DayOfWeek)
     suspend fun markPermissionRequested(permission: String)
+
+    /** Guarda a frase no topo das recentes (sem repetir, no máximo [MAX_RECENT_CAPTURES]). */
+    suspend fun addRecentCapture(text: String)
+    suspend fun clearRecentCaptures()
+
+    companion object {
+        const val MAX_RECENT_CAPTURES = 5
+    }
 }

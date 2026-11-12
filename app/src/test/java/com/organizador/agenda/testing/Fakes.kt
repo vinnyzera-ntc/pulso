@@ -101,6 +101,9 @@ class FakeSettingsRepository : SettingsRepository {
     override suspend fun setWeekStart(day: DayOfWeek) = state.update { it.copy(weekStart = day) }
     override suspend fun markPermissionRequested(permission: String) =
         state.update { it.copy(requestedPermissions = it.requestedPermissions + permission) }
+    override suspend fun clearRecentCaptures() = state.update { it.copy(recentCaptures = emptyList()) }
+override suspend fun addRecentCapture(text: String) =
+        state.update { it.copy(recentCaptures = (listOf(text) + it.recentCaptures.filter { c -> c != text }).take(5)) }
 }
 
 class FakeCalendarRepository(

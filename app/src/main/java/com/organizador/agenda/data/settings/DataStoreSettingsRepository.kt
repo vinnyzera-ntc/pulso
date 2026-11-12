@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.organizador.agenda.domain.model.AppSettings
 import com.organizador.agenda.domain.model.FocusSettings
@@ -33,6 +34,7 @@ class DataStoreSettingsRepository @Inject constructor(
         val eventReminderMinutes = intPreferencesKey("event_reminder_minutes")
         val weekStart = intPreferencesKey("week_start")
         val requestedPermissions = stringSetPreferencesKey("requested_permissions")
+        val recentCaptures = stringPreferencesKey("recent_captures")
     }
 
     override val settings: Flow<AppSettings> = store.data.map { p ->
@@ -54,6 +56,7 @@ class DataStoreSettingsRepository @Inject constructor(
             eventReminderMinutes = p[Keys.eventReminderMinutes] ?: d.eventReminderMinutes,
             weekStart = p[Keys.weekStart]?.let(DayOfWeek::of) ?: d.weekStart,
             requestedPermissions = p[Keys.requestedPermissions] ?: emptySet(),
+            recentCaptures = p[Keys.recentCaptures]?.split('\n')?.filter { it.isNotBlank() }.orEmpty(),
         )
     }
 
@@ -90,6 +93,20 @@ class DataStoreSettingsRepository @Inject constructor(
 
     override suspend fun setWeekStart(day: DayOfWeek) {
         store.edit { it[Keys.weekStart] = day.value }
+    }
+
+    override suspend fun addRecentCapture(text: String) {
+        val line = text.replace('\n', ' ').trim()
+        if (line.isEmpty()) return
+        store.edit {
+            val current = it[Keys.recentCaptures]?.split('\n').orEmpty()
+            it[Keys.recentCaptures] = (listOf(line) + current.filter { c -> !c.equals(line, ignoreCase = true) })
+                .take(SettingsRepository.MAX_RECENT_CAPTURES).joinToString("\n")
+        }
+    }
+
+    override suspend fun clearRecentCaptures() {
+        store.edit { it.remove(Keys.recentCaptures) }
     }
 
     override suspend fun markPermissionRequested(permission: String) {

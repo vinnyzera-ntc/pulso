@@ -24,6 +24,8 @@ data class AppSettings(
     /** Lembrete padrão de novos compromissos, em minutos antes. */
     val eventReminderMinutes: Int = 10,
     val weekStart: DayOfWeek = DayOfWeek.SUNDAY,
+    /** Últimas frases da Captura rápida, da mais recente para a mais antiga. */
+    val recentCaptures: List<String> = emptyList(),
     /** Permissões já pedidas ao menos uma vez (para distinguir "nunca pedida" de "bloqueada"). */
     val requestedPermissions: Set<String> = emptySet(),
 )

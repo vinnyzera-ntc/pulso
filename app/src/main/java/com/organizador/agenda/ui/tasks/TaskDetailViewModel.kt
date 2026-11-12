@@ -11,6 +11,7 @@ import com.organizador.agenda.domain.model.Tag
 import com.organizador.agenda.domain.model.Task
 import com.organizador.agenda.domain.repository.TaskRepository
 import com.organizador.agenda.domain.time.NowProvider
+import com.organizador.agenda.focus.FocusSelection
 import com.organizador.agenda.ui.common.Messenger
 import com.organizador.agenda.ui.common.UiMessage
 import com.organizador.agenda.ui.navigation.TaskDetailRoute
@@ -42,6 +43,7 @@ class TaskDetailViewModel @Inject constructor(
     private val tasks: TaskRepository,
     nowProvider: NowProvider,
     private val messenger: Messenger,
+    private val focusSelection: FocusSelection,
     /** Edições de texto são gravadas ao sair da tela, quando o escopo do ViewModel já foi cancelado. */
     @param:ApplicationScope private val appScope: CoroutineScope,
 ) : ViewModel() {
@@ -93,6 +95,9 @@ class TaskDetailViewModel @Inject constructor(
     fun deleteSubtask(subtaskId: Long) = viewModelScope.launch { tasks.deleteSubtask(subtaskId) }
 
     fun setDone(done: Boolean) = viewModelScope.launch { tasks.setCompleted(id, done) }
+
+    /** Deixa esta tarefa escolhida na aba Foco. */
+    fun selectForFocus() = focusSelection.select(id)
 
     fun delete() = appScope.launch {
         val snapshot = tasks.delete(id) ?: return@launch
