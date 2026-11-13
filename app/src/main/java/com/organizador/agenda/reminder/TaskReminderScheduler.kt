@@ -4,12 +4,19 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
+import android.util.Log
+import com.organizador.agenda.alarm.setWakeUpAt
 import com.organizador.agenda.di.ApplicationScope
 import com.organizador.agenda.domain.reminder.ReminderPlanner
 import com.organizador.agenda.domain.repository.SettingsRepository
 import com.organizador.agenda.domain.repository.TaskRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
@@ -19,11 +26,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDateTime
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Lembretes de tarefas. Arma um único alarme exato, para o próximo lembrete; quando ele toca
@@ -33,6 +35,11 @@ import javax.inject.Singleton
  * "Última conferência" ([KEY_SINCE]) separa um lembrete perdido (aparelho desligado: toca ao
  * religar) de um horário que já tinha passado quando a tarefa foi criada (não toca). Fica fora
  * do backup, para uma restauração não disparar lembretes antigos.
+ *
+ * Conferências causadas por edição (o usuário criou ou mudou uma tarefa) só olham o último
+ * minuto: o que venceu antes disso já tocou pelo alarme, ou já tinha passado ao ser criado.
+ * A primeira conferência do processo e as dos receivers (alarme, religar, hora/fuso) usam a
+ * última conferência gravada, para recuperar o que se perdeu.
  */
 @Singleton
 class TaskReminderScheduler @Inject constructor(
@@ -52,16 +59,31 @@ class TaskReminderScheduler @Inject constructor(
         if (started) return
         started = true
         scope.launch {
+            var first = true
             combine(tasks.observeTasks(), settings.settings.map { it.taskReminderTime }.distinctUntilChanged()) { _, _ -> }
                 .conflate()
-                .collect { refresh() }
+                .collect {
+                    refresh(fromEdit = !first)
+                    first = false
+                }
         }
     }
 
-    suspend fun refresh() = mutex.withLock {
+    suspend fun refresh(fromEdit: Boolean = false) = mutex.withLock {
+        try {
+            check(fromEdit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Um erro aqui (banco, notificação, alarme) não pode derrubar o app nem parar a coleta.
+            Log.w("Pulso", "Falha ao conferir lembretes", e)
+        }
+    }
+
+    private suspend fun check(fromEdit: Boolean) {
         val now = Instant.now(clock)
-        // Se o relógio voltou, a última conferência "no futuro" não pode esconder lembretes.
-        val since = prefs.getLong(KEY_SINCE, -1).takeIf { it >= 0 }?.let(Instant::ofEpochMilli)?.coerceAtMost(now) ?: now
+        val stored = prefs.getLong(KEY_SINCE, -1).takeIf { it >= 0 }?.let(Instant::ofEpochMilli)
+        val since = ReminderPlanner.since(stored, now, fromEdit)
         val all = tasks.observeTasks().first()
         val defaultTime = settings.settings.first().taskReminderTime
         val plan = ReminderPlanner.plan(all, defaultTime, clock.zone, since, now)
@@ -85,9 +107,7 @@ class TaskReminderScheduler @Inject constructor(
             alarms.cancel(intent)
             return
         }
-        val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarms.canScheduleExactAlarms()
-        if (exact) alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.toEpochMilli(), intent)
-        else alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.toEpochMilli(), intent)
+        alarms.setWakeUpAt(at.toEpochMilli(), intent)
     }
 
     companion object {

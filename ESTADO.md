@@ -4,39 +4,36 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 
 ## Onde estamos
 
-- **Fases 0 a 4 concluídas** e commitadas em `main` (último commit: `e7b95f6 feat: fase 4 — Captura rápida e Modo foco`).
-- **Fase 5 não iniciada.** A fase 4 está aguardando o OK do usuário (fluxo: cada fase termina com commit + prints e para para aprovação).
-- Testes na entrega da fase 4: 107 unitários (73 casos de tabela no parser) e 14 instrumentados no aparelho.
-- Prints da fase 4 em `prints/fase-4` (gitignored): captura, criação de tarefa/compromisso, foco (preparação, rodando, pausado, pausa, concluído) e paisagem.
+- **Fases 0 a 5 concluídas** e commitadas em `main`. A v1 está completa e **aguarda o OK do usuário** para a fase 5.
+- Testes na entrega da fase 5: 122 unitários e 15 instrumentados no aparelho, todos passando.
+- Prints da fase 5 em `prints/fase-5` (gitignored): telas nos dois temas (`folha-temas.png`), notificação de lembrete, toque abrindo a tarefa, fonte 2× (`fonte-2x/`) e paisagem (`paisagem/`).
 
 ## O que o app já faz
 
 | Área | Conteúdo |
 |---|---|
 | Base | Tema Pulso (Compose + Material 3, dark-first), Room, DataStore, backup automático ligado |
-| Agenda Google | Via Calendar Provider (sem backend); dia, semana e mês; criar/editar/apagar; recorrentes com "Só este / Toda a série"; sincronização pedida logo após gravar |
+| Agenda Google | Via Calendar Provider (sem backend); dia, semana e mês; criar/editar/apagar; recorrentes com "Só este / Toda a série"; sincronização pedida logo após gravar; falha ao gravar vira aviso, sem fechar o app |
 | Hoje e Tarefas | Lista do dia, tarefas com data/prioridade/etiquetas, detalhe da tarefa |
+| Lembretes de tarefas | Um alarme exato para o próximo lembrete; notificação com Concluir, Adiar 15 min e Adiar 1 h; tocar abre a tarefa; sem hora = 09:00 (Ajustes); rearma ao religar, atualizar o app e mudar hora/fuso; lembrete perdido com o aparelho desligado toca ao religar, horário que já passou ao criar não toca |
 | Captura rápida | Parser pt-BR local (datas, horas, duração, #etiquetas, p1–p4; repetição reconhecida mas não suportada); "Entendi assim", troca Tarefa/Compromisso, recentes, Desfazer |
-| Modo foco | Pomodoro (FocusMachine), serviço em primeiro plano com contagem na notificação, fim de fase por alarme exato (funciona com tela apagada), sessões no Room, FocusOrbit com animação contínua |
-| Paisagem | Layouts em duas colunas em Agenda, Captura e Foco |
+| Modo foco | Pomodoro (FocusMachine), serviço em primeiro plano com contagem na notificação, fim de fase por alarme exato, sessões no Room, FocusOrbit com animação contínua |
+| Acabamento | Ícone adaptativo próprio (linha de pulso ember + ponto volt, com versão monocromática); fonte grande (até 2×) sem quebras; rótulos do TalkBack nos círculos de concluir ("Concluir: título"); paisagem revisada em todas as telas |
+
+## Release
+
+- `./gradlew :app:assembleRelease` gera `app/build/outputs/apk/release/app-release.apk`, versão **1.0.0**, assinado.
+- Chave em `keystore/pulso-release.jks`, senhas em `keystore.properties` (os dois **fora do git**). **Fazer cópia de segurança dos dois**: sem eles não é possível instalar atualizações por cima.
+- O aparelho de teste tem o build **debug** (outra assinatura). Para trocar pelo release é preciso desinstalar o debug antes, o que apaga as tarefas locais (as agendas do Google não são afetadas).
+- Minificação (R8) segue desligada no release.
 
 ## Aparelho de teste
 
-- Aparelho de teste **conectado e acessível via adb** em 12/11/2026, desbloqueado.
-- Configurações conferidas e no valor original: night mode = yes, `stay_on_while_plugged_in` = 0, `animator_duration_scale` = 1.0, `user_rotation` = 0.
-- Pacote de teste `com.organizador.agenda.test` não está instalado (limpo). App `com.organizador.agenda` instalado.
-- Para dirigir o app: `source scripts/ui.sh` (tem trava de primeiro plano), `scripts/prints.sh`, seed de debug (`-e seed demo|demo-proximo|foco:<min>|recentes|limpar`). Sempre `limpar` e restaurar configurações ao fim.
+- Aparelho de teste. Configurações restauradas ao fim da fase 5: night mode = yes, `stay_on_while_plugged_in` = 0, `animator_duration_scale` = 1.0, `user_rotation` = 0, `font_scale` = 1.0.
+- Pacote de teste desinstalado; seed `limpar` rodado (sem tarefas de exemplo nem agenda "Pulso Teste").
+- Para dirigir o app: `source scripts/ui.sh`, `scripts/prints.sh`, seed de debug (`-e seed demo|demo-proximo|foco:<min>|lembrete:<min>|recentes|limpar`). `center`/`tap` e `tap_text.sh` procuram primeiro o texto visível (o círculo de concluir tem descrição "Concluir: <título>").
 
 ## Próximos passos
-
-### Fase 5 — lembretes, acabamento e revisão (a fazer)
-1. **Lembretes de tarefas**: notificação no horário da tarefa; tarefa com data sem hora avisa às 09:00 (ajustável em Ajustes); reagendar após reboot e mudança de fuso/hora; ações na notificação (concluir, adiar).
-2. **Acabamento**: estados vazios e de erro, acessibilidade (TalkBack, tamanhos de fonte), revisar paisagem em todas as telas, ícone e nome do app.
-3. **Revisão**: passada de código (`/code-review`), testes que faltarem, build de release assinado para instalação direta.
-4. Fechamento: commit + prints em `prints/fase-5`, restaurar o aparelho e parar para OK.
-
-### Pendências a esclarecer
-- Compromissos **sem participantes**: confirmado em 12/11/2026 (o ROADMAP está correto).
 
 ### Depois da v1
 - Interface Liquid Glass (decidir antes: substitui o Pulso inteiro ou só superfícies flutuantes).

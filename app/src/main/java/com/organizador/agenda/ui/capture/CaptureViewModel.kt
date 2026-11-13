@@ -101,7 +101,11 @@ class CaptureViewModel @Inject constructor(
     /** false = não gravou (sem agenda ou erro do provider, já avisado). */
     private suspend fun createEvent(p: ParsedCapture): Boolean {
         val s = settings.settings.first()
-        val calendarId = CalendarSelection.defaultForCreate(calendar.observeCalendars().first(), s.defaultCalendarId)?.id ?: return false
+        val calendarId = CalendarSelection.defaultForCreate(calendar.observeCalendars().first(), s.defaultCalendarId)?.id
+        if (calendarId == null) {
+            messenger.show(UiMessage(R.string.msg_no_calendar))
+            return false
+        }
         val zone = nowProvider.zone
         val start = LocalDateTime.of(p.date, p.time).atZone(zone).toInstant()
         val id = messenger.guard(R.string.msg_calendar_write_failed) { calendar.createEvent(

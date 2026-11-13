@@ -6,12 +6,13 @@ import android.content.Intent
 import com.organizador.agenda.di.ApplicationScope
 import com.organizador.agenda.domain.repository.TaskRepository
 import dagger.hilt.android.AndroidEntryPoint
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDateTime
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import java.time.Clock
-import java.time.LocalDateTime
-import javax.inject.Inject
 
 /** Alarme do próximo lembrete e botões da notificação ("Concluir", "Adiar"). Não exportado. */
 @AndroidEntryPoint
@@ -37,7 +38,13 @@ class ReminderReceiver : BroadcastReceiver() {
                             notifier.cancel(taskId)
                             val minutes = intent.getIntExtra(EXTRA_MINUTES, ReminderNotifier.SNOOZE_SHORT).toLong()
                             val until = LocalDateTime.now(clock).withSecond(0).withNano(0).plusMinutes(minutes)
-                            tasks.snoozeReminder(intent.getLongExtra(EXTRA_REMINDER_ID, -1), until)
+                            // Editar os lembretes recria as linhas (ids novos): se o da notificação
+                            // não existe mais, adia o último que tocou (ou qualquer um) da tarefa.
+                            val reminders = tasks.getTask(taskId)?.reminders.orEmpty()
+                            val hinted = intent.getLongExtra(EXTRA_REMINDER_ID, -1)
+                            val target = reminders.firstOrNull { it.id == hinted }
+                                ?: reminders.maxByOrNull { it.firedAt ?: Instant.EPOCH }
+                            target?.let { tasks.snoozeReminder(it.id, until) }
                         }
                     }
                     scheduler.refresh()

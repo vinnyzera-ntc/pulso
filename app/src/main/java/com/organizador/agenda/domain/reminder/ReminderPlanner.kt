@@ -34,6 +34,20 @@ data class ReminderPlan(
  * de fuso só exige recalcular.
  */
 object ReminderPlanner {
+    /** Folga para um alarme que chega junto com uma edição não ser engolido por ela. */
+    const val EDIT_WINDOW_SECONDS = 60L
+
+    /**
+     * Início da janela de disparo. [stored] = última conferência gravada (null = nunca).
+     * Numa conferência causada por edição, só o último minuto conta: o que venceu antes disso
+     * já tocou pelo alarme, ou já tinha passado quando a tarefa foi criada ou mudada.
+     * Se o relógio voltou, uma conferência "no futuro" não pode esconder lembretes.
+     */
+    fun since(stored: Instant?, now: Instant, fromEdit: Boolean): Instant {
+        val base = stored?.coerceAtMost(now) ?: now
+        return if (fromEdit) maxOf(base, now.minusSeconds(EDIT_WINDOW_SECONDS)) else base
+    }
+
     fun plan(tasks: List<Task>, defaultTime: LocalTime, zone: ZoneId, since: Instant, now: Instant): ReminderPlan {
         val due = mutableListOf<DueTask>()
         var next: Instant? = null

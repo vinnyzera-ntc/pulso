@@ -54,6 +54,22 @@ class ReminderPlannerTest {
     }
 
     @Test
+    fun edicaoComAppAbertoHaHoras_horarioPassadoNaoToca() {
+        // App aberto desde as 08:00 sem conferir; às 15:00 cria tarefa de hoje sem hora (lembrete 09:00).
+        val since = ReminderPlanner.since(stored = at(8, 0), now = at(15, 0), fromEdit = true)
+        val t = task(1, time = null, reminders = arrayOf(TaskReminder(id = 10)))
+        assertTrue(plan(listOf(t), since, at(15, 0)).due.isEmpty())
+    }
+
+    @Test
+    fun since_alarmeEReligarUsamOGravado_relogioVoltandoNaoEscondeNada() {
+        assertEquals(at(8, 0), ReminderPlanner.since(at(8, 0), at(15, 0), fromEdit = false))
+        assertEquals(at(14, 59), ReminderPlanner.since(at(8, 0), at(15, 0), fromEdit = true))
+        assertEquals(at(15, 0), ReminderPlanner.since(null, at(15, 0), fromEdit = false))
+        assertEquals("relógio voltou", at(10, 0), ReminderPlanner.since(at(12, 0), at(10, 0), fromEdit = false))
+    }
+
+    @Test
     fun perdidoComAparelhoDesligado_tocaAoReligar() {
         val t = task(1, reminders = arrayOf(TaskReminder(id = 10)))
         val p = plan(listOf(t), since = at(8, 0), now = at(18, 0))

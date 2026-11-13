@@ -48,7 +48,10 @@ class EventEditor @Inject constructor(
 
     /** Remarca mantendo a duração e todo o resto. Evento avulso ganha "Desfazer". */
     suspend fun move(target: EventTarget, newStart: Instant) {
-        val details = messenger.guard(R.string.msg_calendar_write_failed) { calendar.getEvent(target.eventId) } ?: return
+        // null sem exceção = sem permissão ou o compromisso sumiu: avisa do mesmo jeito.
+        val details = messenger.guard(R.string.msg_calendar_write_failed) {
+            calendar.getEvent(target.eventId) ?: error("Compromisso indisponível")
+        } ?: return
         val original = EventForm.edit(details, target.instanceStart, target.instanceEnd, now.zone).toDraft(now.zone)
         val duration = Duration.between(target.instanceStart, target.instanceEnd)
         val moved = original.copy(start = newStart, end = newStart.plus(duration))

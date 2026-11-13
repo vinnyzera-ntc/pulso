@@ -9,6 +9,7 @@ import android.net.Uri
 import androidx.core.app.NotificationCompat
 import com.organizador.agenda.MainActivity
 import com.organizador.agenda.R
+import com.organizador.agenda.alarm.NOTIFICATION_ACCENT_VOLT
 import com.organizador.agenda.domain.reminder.DueTask
 import com.organizador.agenda.focus.FocusController
 import com.organizador.agenda.ui.tasks.TaskUiMapper
@@ -39,7 +40,7 @@ class ReminderNotifier @Inject constructor(
         val whenText = task.dueDate?.let { TaskUiMapper.whenLabel(it, task.dueTime, now.toLocalDate()) }.orEmpty()
         val builder = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_pulso)
-            .setColor(ACCENT_VOLT) // lembrete = papel de tempo (volt)
+            .setColor(NOTIFICATION_ACCENT_VOLT) // lembrete = papel de tempo (volt)
             .setContentTitle(task.title)
             .setContentText(whenText)
             .setContentIntent(openTask(id))
@@ -93,8 +94,5 @@ class ReminderNotifier @Inject constructor(
         private const val TAG = "tarefa"
         const val SNOOZE_SHORT = 15
         const val SNOOZE_LONG = 60
-
-        /** Volt do tema escuro (#2F95F5): a notificação é do sistema, fora do tema Compose. */
-        const val ACCENT_VOLT = 0xFF2F95F5.toInt()
     }
 }

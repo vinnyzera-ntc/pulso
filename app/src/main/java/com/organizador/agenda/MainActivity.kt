@@ -46,8 +46,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Reaberto pelos Recentes, o Android devolve a intent original da notificação (com
+     * FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY): ela não deve abrir a tarefa ou o foco de novo.
+     */
+    private fun Intent.fromNotification(): Boolean = flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == 0
+
     private fun taskRequest(intent: Intent?): OpenTaskRequest? =
-        intent?.takeIf { it.getStringExtra(EXTRA_OPEN) == OPEN_TASK }
+        intent?.takeIf { it.fromNotification() && it.getStringExtra(EXTRA_OPEN) == OPEN_TASK }
             ?.getLongExtra(EXTRA_TASK_ID, -1)?.takeIf { it > 0 }?.let(::OpenTaskRequest)
 
     /**
@@ -58,7 +64,7 @@ class MainActivity : ComponentActivity() {
 
     /** Rota inicial: a pedida pela notificação do foco, ou o atalho de debug. */
     private fun startRoute(): Any? =
-        if (intent?.getStringExtra(EXTRA_OPEN) == OPEN_FOCUS) TopLevel.Focus.route else debugStartRoute()
+        if (intent?.takeIf { it.fromNotification() }?.getStringExtra(EXTRA_OPEN) == OPEN_FOCUS) TopLevel.Focus.route else debugStartRoute()
 
     private fun debugStartRoute(): Any? {
         val key = debugExtra(EXTRA_SCREEN) ?: return null

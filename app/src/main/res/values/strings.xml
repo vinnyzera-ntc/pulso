@@ -212,6 +212,7 @@
     <string name="focus_next_session">Próxima sessão</string>
     <string name="focus_back_to_focus">Voltar ao foco</string>
     <string name="msg_calendar_write_failed">Não foi possível gravar na agenda. Confira se o Pulso ainda tem acesso à agenda e tente de novo.</string>
+    <string name="msg_no_calendar">Nenhuma agenda disponível para criar o compromisso. Confira o acesso à agenda em Ajustes.</string>
     <string name="msg_action_failed">Não foi possível concluir. Tente de novo.</string>
     <string name="task_checkbox_label">Concluir: %1$s</string>
     <string name="reminder_channel">Lembretes de tarefas</string>

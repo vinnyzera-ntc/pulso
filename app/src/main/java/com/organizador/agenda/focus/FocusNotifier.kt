@@ -9,6 +9,7 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.organizador.agenda.MainActivity
 import com.organizador.agenda.R
+import com.organizador.agenda.alarm.NOTIFICATION_ACCENT_VOLT
 import com.organizador.agenda.domain.focus.FocusMachine
 import com.organizador.agenda.domain.focus.FocusState
 import com.organizador.agenda.domain.model.FocusKind
@@ -117,7 +118,6 @@ class FocusNotifier @Inject constructor(
         const val ID_ONGOING = 4201
         const val ID_DONE = 4202
 
-        /** Volt do tema escuro (#2F95F5): a notificação é do sistema, fora do tema Compose. */
-        const val ACCENT_VOLT = 0xFF2F95F5.toInt()
+        const val ACCENT_VOLT = NOTIFICATION_ACCENT_VOLT
     }
 }

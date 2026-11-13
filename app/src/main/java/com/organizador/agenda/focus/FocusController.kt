@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.content.ContextCompat
+import com.organizador.agenda.alarm.setWakeUpAt
 import com.organizador.agenda.di.ApplicationScope
 import com.organizador.agenda.domain.focus.FocusMachine
 import com.organizador.agenda.domain.focus.FocusState
@@ -13,6 +14,11 @@ import com.organizador.agenda.domain.repository.FocusRepository
 import com.organizador.agenda.domain.repository.SettingsRepository
 import com.organizador.agenda.domain.repository.TaskRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -22,11 +28,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.time.Clock
-import java.time.Duration
-import java.time.Instant
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Dono do estado do modo foco. A tela, a notificação e o serviço só observam [state] e chamam
@@ -135,9 +136,7 @@ class FocusController @Inject constructor(
             delay(Duration.between(now(), end).toMillis().coerceAtLeast(0))
             onPhaseDue()
         }
-        val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarms.canScheduleExactAlarms()
-        if (exact) alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, end.toEpochMilli(), intent)
-        else alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, end.toEpochMilli(), intent)
+        alarms.setWakeUpAt(end.toEpochMilli(), intent)
     }
 
     companion object {
