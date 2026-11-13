@@ -1,6 +1,6 @@
 # Pulso — roadmap
 
-App pessoal de produtividade, de uso individual (instalação direta, sem Play Store).
+App pessoal, como um bloco de notas para anotar lembretes e alarmes, de uso individual (instalação direta, sem Play Store).
 
 ## v1
 

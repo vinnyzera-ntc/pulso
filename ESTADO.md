@@ -36,7 +36,7 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 4. Fechamento: commit + prints em `prints/fase-5`, restaurar o aparelho e parar para OK.
 
 ### Pendências a esclarecer
-- **Participantes de compromissos**: a memória registra que a decisão "sem participantes" foi **revogada em 11/11/2026**, mas o `ROADMAP.md` (seção Decisões) ainda a descreve como vigente. Confirmar com o usuário o que vale e atualizar o ROADMAP.
+- Compromissos **sem participantes**: confirmado em 12/11/2026 (o ROADMAP está correto).
 
 ### Depois da v1
 - Interface Liquid Glass (decidir antes: substitui o Pulso inteiro ou só superfícies flutuantes).
