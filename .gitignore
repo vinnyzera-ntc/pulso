@@ -21,3 +21,6 @@ local.properties
 /.claude/settings.local.json
 # Configurações locais do Android Studio
 /.idea
+# Assinatura de release (chave e senhas ficam só nesta máquina)
+/keystore
+keystore.properties

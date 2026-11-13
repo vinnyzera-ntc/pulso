@@ -26,6 +26,7 @@ import org.junit.runner.RunWith
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -56,6 +57,27 @@ class TaskDaoTest {
         tags = listOf(Tag(name = "#Pessoal"), Tag(name = "pessoal"), Tag(name = "Finanças")),
         reminders = listOf(TaskReminder(offsetMinutes = 15), TaskReminder(offsetMinutes = 15), TaskReminder(offsetMinutes = 0)),
     )
+
+    @Test
+    fun lembretes_disparoAdiamentoEMudancaDeVencimento() = runTest {
+        val id = tasks.save(sample())
+        val reminders = tasks.getTask(id)!!.reminders
+        val fired = Instant.parse("2026-11-10T11:45:00Z")
+        tasks.markRemindersFired(reminders.map { it.id }, fired)
+        assertEquals(listOf(fired, fired), tasks.getTask(id)!!.reminders.map { it.firedAt })
+
+        val snooze = LocalDateTime.of(2026, 11, 10, 9, 15)
+        tasks.snoozeReminder(reminders.first().id, snooze)
+        assertEquals(snooze, tasks.getTask(id)!!.reminders.first { it.id == reminders.first().id }.snoozedUntil)
+
+        // Só o título muda: o adiamento continua valendo.
+        tasks.updateFields(tasks.getTask(id)!!.copy(title = "Ligar pro contador (urgente)"))
+        assertEquals(snooze, tasks.getTask(id)!!.reminders.first { it.id == reminders.first().id }.snoozedUntil)
+
+        // O vencimento muda: o adiamento antigo deixa de valer.
+        tasks.updateFields(tasks.getTask(id)!!.copy(dueDate = LocalDate.of(2026, 11, 11)))
+        assertTrue(tasks.getTask(id)!!.reminders.all { it.snoozedUntil == null })
+    }
 
     @Test
     fun salvarELer_comFilhos_etiquetasNormalizadasEDeduplicadas() = runTest {
