@@ -107,7 +107,8 @@ private fun WidgetContent(s: WidgetState) {
             Column(GlanceModifier.defaultWeight().clickable(actionStartActivity(context.open(null)))) {
                 Text(s.eyebrow.uppercase(), style = TextStyle(color = WC.text2, fontSize = 11.sp, fontWeight = FontWeight.Medium), maxLines = 1)
                 Text(
-                    if (s.total > 0) "${s.done} de ${s.total} tarefas" else context.getString(R.string.widget_title),
+                    if (s.total > 0) context.resources.getQuantityString(R.plurals.today_progress, s.total, s.done, s.total)
+                    else context.getString(R.string.widget_title),
                     style = TextStyle(color = WC.text, fontSize = 17.sp, fontWeight = FontWeight.Bold),
                     maxLines = 1,
                 )

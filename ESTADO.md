@@ -4,8 +4,10 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 
 ## Onde estamos
 
-- **Fases 0 a 5 concluídas** e commitadas em `main`. A v1 está completa; fase 5 aprovada pelo usuário em 12/11/2026.
-- Testes na entrega da fase 5: 122 unitários e 15 instrumentados no aparelho, todos passando.
+- **v1 (fases 0 a 5) concluída e aprovada** em 12/11/2026.
+- **v1.1 (12/11/2026)**: tarefas que se repetem, widget de tela inicial e Liquid Glass nas superfícies flutuantes. Instalada no aparelho de teste (release 1.1.0, versionCode 2), aguardando avaliação do usuário.
+- Testes: 138 unitários e 16 instrumentados (inclui a migração do banco v1 → v2), todos passando.
+- Prints da v1.1 em `prints/v1.1` (gitignored): repetição (captura, lista, folha, concluir), vidro (`glass-folha.png`) e widget claro/escuro.
 - Prints da fase 5 em `prints/fase-5` (gitignored): telas nos dois temas (`folha-temas.png`), notificação de lembrete, toque abrindo a tarefa, fonte 2× (`fonte-2x/`) e paisagem (`paisagem/`).
 
 ## O que o app já faz
@@ -18,15 +20,18 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 | Lembretes de tarefas | Um alarme exato para o próximo lembrete; notificação com Concluir, Adiar 15 min e Adiar 1 h; tocar abre a tarefa; sem hora = 09:00 (Ajustes); rearma ao religar, atualizar o app e mudar hora/fuso; lembrete perdido com o aparelho desligado toca ao religar, horário que já passou ao criar não toca |
 | Captura rápida | Parser pt-BR local (datas, horas, duração, #etiquetas, p1–p4; repetição reconhecida mas não suportada); "Entendi assim", troca Tarefa/Compromisso, recentes, Desfazer |
 | Modo foco | Pomodoro (FocusMachine), serviço em primeiro plano com contagem na notificação, fim de fase por alarme exato, sessões no Room, FocusOrbit com animação contínua |
+| Tarefas que se repetem | Diária, dias úteis, dias da semana, mensal (dia N, último dia em mês curto), anual, "a cada N". Concluir leva à próxima data (atrasada pula para depois de hoje), desmarca subtarefas e reativa lembretes; aviso "Próxima: …" com Desfazer. Captura entende "toda segunda e quarta", "todo dia 5", "a cada 2 semanas", "dias úteis". Compromissos que se repetem continuam pelo Google Agenda |
+| Widget | "Hoje" (Glance): data, progresso, compromisso de agora/próximo, tarefas abertas com círculo de concluir, "+N mais", "+" abre a Captura; cores do Pulso claro/escuro; atualiza quando dados mudam e nas viradas de compromisso/meia-noite |
+| Liquid Glass | Só nas superfícies flutuantes: nav pill, avisos e folhas (desfoque + refração nas bordas + brilho especular; Kyant Backdrop 1.0.6). Resto do app no Pulso opaco. Android < 12: visual opaco |
 | Acabamento | Ícone adaptativo próprio (linha de pulso ember + ponto volt, com versão monocromática); fonte grande (até 2×) sem quebras; rótulos do TalkBack nos círculos de concluir ("Concluir: título"); paisagem revisada em todas as telas |
 
 ## Release
 
-- `./gradlew :app:assembleRelease` gera `app/build/outputs/apk/release/app-release.apk`, versão **1.0.0**, assinado.
+- `./gradlew :app:assembleRelease` gera `app/build/outputs/apk/release/app-release.apk`, versão **1.1.0** (versionCode 2), assinado. Atualizações: subir versionCode e instalar por cima (`adb install -r`), sem desinstalar.
 - Chave em `keystore/pulso-release.jks`, senhas em `keystore.properties` (os dois **fora do git**). **Fazer cópia de segurança dos dois**: sem eles não é possível instalar atualizações por cima.
 - **O release 1.0.0 está instalado no aparelho de teste desde 12/11/2026** (no lugar do debug, que não tinha tarefas reais). Permissões de agenda e notificações concedidas pelo usuário.
 - Teste de reinício feito no aparelho com o release: o alarme foi rearmado sozinho após o boot e o lembrete tocou no horário (22:31), sem abrir o app. O teste de troca de fuso foi dispensado pelo usuário (sem viagem prevista); o comportamento está coberto por testes unitários.
-- Atenção: o adb não consegue usar `run-as` nem o seed de debug no release. Para testes com seed, instalar o debug exigiria desinstalar o release (apaga os dados reais). Testes no aparelho daqui em diante devem ser feitos pela interface, sem apagar dados do usuário.
+- O build **debug** agora é outro pacote (`com.organizador.agenda.debug`, "Pulso debug") e convive com o release: testes instrumentados e seeds rodam nele sem tocar nos dados reais. Os scripts (`ui.sh`, `prints.sh`) usam o debug por padrão; `PULSO_PKG=com.organizador.agenda` para dirigir o release. Desinstalar o debug ao fim (a agenda local "Pulso Teste" do seed aparece também no release: rodar `limpar` antes).
 - Minificação (R8) segue desligada no release.
 
 ## Aparelho de teste
@@ -37,9 +42,10 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 
 ## Próximos passos
 
-### Depois da v1
-- Interface Liquid Glass **só nas superfícies flutuantes** (nav pill, folhas, cartões flutuantes); o resto segue no Pulso. Decidido em 12/11/2026.
-- Widget de tela inicial.
+### Ideias em aberto (nenhuma combinada)
+- Repetição também no formulário "Novo item" (hoje: Captura e detalhe da tarefa).
+- Ligar a otimização R8 no release.
+- Publicar no GitHub (repositório privado recomendado).
 
 ### Fora do escopo (definitivo)
 - Follow-ups/acompanhamentos de terceiros; backend e contas.

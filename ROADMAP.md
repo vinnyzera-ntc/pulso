@@ -13,13 +13,13 @@ App pessoal, como um bloco de notas para anotar lembretes e alarmes, de uso indi
 | 4 | Captura rápida (parser pt-BR local) e Modo foco | Concluída |
 | 5 | Lembretes de tarefas, acabamento e revisão | Concluída |
 
-## Depois da v1
+## v1.1 (12/11/2026)
 
-- **Interface Liquid Glass só nas superfícies flutuantes** (decidido em 12/11/2026): nav pill,
-  folhas e cartões flutuantes ganham estilo Liquid Glass (translúcido, com desfoque e refração).
-  O resto do app continua no Pulso (superfícies opacas com hairlines), mantendo os papéis de cor
-  (ação, tempo, concluído, atraso).
-- Widget de tela inicial.
+| Item | Estado |
+|---|---|
+| Tarefas que se repetem | Concluída |
+| Widget de tela inicial | Concluída |
+| Liquid Glass só nas superfícies flutuantes (nav pill, avisos, folhas) | Concluída |
 
 ## Fora do escopo
 
