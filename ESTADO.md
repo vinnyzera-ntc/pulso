@@ -45,7 +45,7 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 ### Ideias em aberto (nenhuma combinada)
 - Repetição também no formulário "Novo item" (hoje: Captura e detalhe da tarefa).
 - Ligar a otimização R8 no release.
-- Publicar no GitHub (repositório privado recomendado).
+- GitHub: fica só local por decisão do usuário (12/11/2026).
 
 ### Fora do escopo (definitivo)
 - Follow-ups/acompanhamentos de terceiros; backend e contas.
