@@ -58,7 +58,24 @@ class FakeTaskRepository(private val now: () -> Instant = { Instant.EPOCH }) : T
         return id
     }
 
-    override suspend fun setCompleted(id: Long, completed: Boolean) = mutate(id) { it.copy(completedAt = if (completed) now() else null) }
+    /** Hoje para as tarefas que se repetem (os testes que usam podem trocar). */
+    var today: java.time.LocalDate = java.time.LocalDate.of(2026, 11, 10)
+
+    override suspend fun setCompleted(id: Long, completed: Boolean): java.time.LocalDate? {
+        val next = if (completed) getTask(id)?.nextDue(today) else null
+        if (next != null) {
+            mutate(id) { t -> t.copy(dueDate = next, subtasks = t.subtasks.map { it.copy(done = false) }) }
+        } else {
+            mutate(id) { it.copy(completedAt = if (completed) now() else null) }
+        }
+        return next
+    }
+
+    override suspend fun setRecurrence(taskId: Long, recurrence: com.organizador.agenda.domain.model.Recurrence?, fallbackDate: java.time.LocalDate) =
+        mutate(taskId) { t ->
+            val due = t.dueDate ?: recurrence?.firstOnOrAfter(fallbackDate)
+            t.copy(dueDate = due, recurrence = due?.let { recurrence?.anchoredOn(it) })
+        }
     override suspend fun updateFields(task: Task) =
         mutate(task.id) { it.copy(title = task.title, notes = task.notes, priority = task.priority, dueDate = task.dueDate, dueTime = task.dueTime) }
     override suspend fun setTags(taskId: Long, names: List<String>) = mutate(taskId) { it.copy(tags = names.map(::tag)) }

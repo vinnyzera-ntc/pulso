@@ -2,10 +2,6 @@ package com.organizador.agenda.ui.tasks
 
 import android.Manifest
 import android.os.Build
-import com.organizador.agenda.ui.common.PermissionCopy
-import com.organizador.agenda.ui.common.PermissionPanel
-import com.organizador.agenda.ui.common.PermissionStatus
-import com.organizador.agenda.ui.common.rememberPermissionRequest
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +34,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -68,14 +65,20 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.organizador.agenda.R
 import com.organizador.agenda.domain.model.Priority
+import com.organizador.agenda.domain.model.Recurrence
+import com.organizador.agenda.domain.model.RecurrenceUnit
 import com.organizador.agenda.domain.model.Subtask
 import com.organizador.agenda.domain.model.Task
 import com.organizador.agenda.domain.task.TaskLists
 import com.organizador.agenda.domain.time.PtBr
 import com.organizador.agenda.ui.common.ChoiceSheet
 import com.organizador.agenda.ui.common.EmptyState
-import com.organizador.agenda.ui.common.isCompactHeight
+import com.organizador.agenda.ui.common.PermissionCopy
+import com.organizador.agenda.ui.common.PermissionPanel
+import com.organizador.agenda.ui.common.PermissionStatus
 import com.organizador.agenda.ui.common.PulsoBottomSheet
+import com.organizador.agenda.ui.common.isCompactHeight
+import com.organizador.agenda.ui.common.rememberPermissionRequest
 import com.organizador.agenda.ui.pulso.Pulso
 import com.organizador.agenda.ui.pulso.PulsoSpace
 import com.organizador.agenda.ui.pulso.components.ChipTone
@@ -88,9 +91,10 @@ import com.organizador.agenda.ui.pulso.components.RoundIconButton
 import com.organizador.agenda.ui.pulso.components.SecondaryButton
 import com.organizador.agenda.ui.pulso.components.SectionLabel
 import com.organizador.agenda.ui.pulso.components.SurfaceLevel
+import java.time.LocalDate
 import java.time.LocalDateTime
 
-private enum class DetailSheet { When, Priority, Tags, Reminder }
+private enum class DetailSheet { When, Repeat, Priority, Tags, Reminder }
 
 @Composable
 fun TaskDetailScreen(onBack: () -> Unit, onFocus: () -> Unit, viewModel: TaskDetailViewModel = hiltViewModel()) {
@@ -179,6 +183,11 @@ private fun androidx.compose.foundation.layout.ColumnScope.TaskDetailContent(
         FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             val due = whenChip(task, state.now)
             ChipButton(due.first, due.second, Icons.Outlined.CalendarMonth) { sheet = DetailSheet.When }
+            val repeat = task.recurrence?.takeIf { task.dueDate != null }
+            ChipButton(
+                repeat?.let(PtBr::recurrence) ?: stringResource(R.string.field_repeat),
+                if (repeat != null) ChipTone.Volt else ChipTone.Neutral, Icons.Outlined.Repeat,
+            ) { sheet = DetailSheet.Repeat }
             ChipButton(
                 if (task.priority == Priority.P4) stringResource(R.string.field_priority) else task.priority.name,
                 ChipTone.Neutral, Icons.Outlined.Flag,
@@ -254,6 +263,15 @@ private fun androidx.compose.foundation.layout.ColumnScope.TaskDetailContent(
             WhenEditor(task.dueDate, task.dueTime, state.now.toLocalDate(), onChange = vm::setWhen)
             SecondaryButton(stringResource(R.string.action_done), dismiss, Modifier.fillMaxWidth())
         }
+        DetailSheet.Repeat -> {
+            val current = task.recurrence?.takeIf { task.dueDate != null }
+            val options = repeatOptions(task.dueDate ?: state.now.toLocalDate()).let { if (current != null && current !in it) it + current else it }
+            ChoiceSheet<Recurrence?>(
+                stringResource(R.string.field_repeat), options, current,
+                { it?.let(PtBr::recurrence) ?: "Não se repete" }, vm::setRecurrence, dismiss,
+                description = stringResource(R.string.repeat_description),
+            )
+        }
         DetailSheet.Priority -> ChoiceSheet(
             stringResource(R.string.field_priority), Priority.entries, task.priority, { it.name }, vm::setPriority, dismiss,
             description = stringResource(R.string.priority_description),
@@ -274,6 +292,16 @@ private fun androidx.compose.foundation.layout.ColumnScope.TaskDetailContent(
         null -> Unit
     }
 }
+
+/** Opções prontas de repetição, a partir do dia do vencimento (ou de hoje). */
+private fun repeatOptions(day: LocalDate): List<Recurrence?> = listOf(
+    null,
+    Recurrence.daily(),
+    Recurrence(RecurrenceUnit.Weekly, weekdays = Recurrence.WORKDAYS),
+    Recurrence.weekly(day.dayOfWeek),
+    Recurrence.monthly(day.dayOfMonth),
+    Recurrence.yearly(),
+)
 
 private fun reminderShort(minutes: Int): String = when {
     minutes == 0 -> "Na hora"

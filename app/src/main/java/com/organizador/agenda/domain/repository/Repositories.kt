@@ -8,13 +8,15 @@ import com.organizador.agenda.domain.model.EventDraft
 import com.organizador.agenda.domain.model.FocusKind
 import com.organizador.agenda.domain.model.FocusSession
 import com.organizador.agenda.domain.model.FocusSettings
+import com.organizador.agenda.domain.model.Recurrence
 import com.organizador.agenda.domain.model.Tag
 import com.organizador.agenda.domain.model.Task
-import kotlinx.coroutines.flow.Flow
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository {
     fun observeTasks(): Flow<List<Task>>
@@ -23,7 +25,14 @@ interface TaskRepository {
 
     /** Insere (id 0) ou atualiza a tarefa, substituindo subtarefas, etiquetas e lembretes. */
     suspend fun save(task: Task): Long
-    suspend fun setCompleted(id: Long, completed: Boolean)
+    /**
+     * Conclui ou reabre. Uma tarefa que se repete não fica concluída: vai para o próximo
+     * vencimento, que é devolvido (null = concluída ou reaberta de fato).
+     */
+    suspend fun setCompleted(id: Long, completed: Boolean): LocalDate?
+
+    /** Liga, troca ou desliga (null) a repetição. Exige data: sem data, a tarefa ganha [fallbackDate]. */
+    suspend fun setRecurrence(taskId: Long, recurrence: Recurrence?, fallbackDate: LocalDate)
 
     /** Atualiza título, notas, prioridade e data/hora, sem tocar em subtarefas, etiquetas e lembretes. */
     suspend fun updateFields(task: Task)

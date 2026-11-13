@@ -44,7 +44,8 @@ data class CaptureUiState(
     /** "Entendi assim": data/hora em volt, o resto neutro. */
     val chips: List<TaskChipUi> = emptyList(),
     /** A frase tem repetição ("toda segunda"), que ainda não é suportada. */
-    val hasRecurrence: Boolean = false,
+    /** Compromisso com repetição: ela fica de fora (o compromisso é criado uma vez). */
+    val recurrenceIgnored: Boolean = false,
     val canSend: Boolean = false,
     val recents: List<String> = emptyList(),
 )
@@ -93,7 +94,10 @@ class CaptureViewModel @Inject constructor(
 
     private suspend fun createTask(p: ParsedCapture) {
         val id = tasks.save(
-            Task(title = p.title, priority = p.priority, dueDate = p.date, dueTime = p.time, tags = p.tags.map { Tag(name = it) }),
+            Task(
+                title = p.title, priority = p.priority, dueDate = p.date, dueTime = p.time,
+                tags = p.tags.map { Tag(name = it) }, recurrence = p.recurrence,
+            ),
         )
         messenger.show(UiMessage(R.string.msg_task_created, R.string.action_undo) { tasks.delete(id) })
     }
@@ -153,6 +157,7 @@ class CaptureViewModel @Inject constructor(
                 if (kind == CaptureKind.Event) {
                     add(TaskChipUi(PtBr.duration(parsed.durationMinutes ?: DEFAULT_EVENT_MINUTES)))
                 } else {
+                    parsed.recurrence?.let { add(TaskChipUi(PtBr.recurrence(it), ChipTone.Volt, ChipIcon.Repeat)) }
                     if (parsed.priority != Priority.P4) add(TaskChipUi(parsed.priority.name, icon = ChipIcon.Flag))
                     parsed.tags.forEach { add(TaskChipUi("#$it")) }
                 }
@@ -163,7 +168,7 @@ class CaptureViewModel @Inject constructor(
                 canToggleKind = canBeEvent,
                 highlights = parsed.spans.map { it.range },
                 chips = if (parsed.isEmpty) emptyList() else chips,
-                hasRecurrence = parsed.recurrence != null,
+                recurrenceIgnored = kind == CaptureKind.Event && parsed.recurrence != null,
                 canSend = !parsed.isEmpty,
                 recents = recents,
             )

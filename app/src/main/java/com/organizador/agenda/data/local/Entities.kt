@@ -25,6 +25,8 @@ data class TaskEntity(
     @ColumnInfo(name = "completed_at") val completedAt: Instant? = null,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "updated_at") val updatedAt: Instant,
+    /** Recurrence.encode() ("W|1|1,3"); null = não se repete. Coluna nova na versão 2 do banco. */
+    @ColumnInfo(name = "recurrence") val recurrence: String? = null,
 )
 
 @Entity(

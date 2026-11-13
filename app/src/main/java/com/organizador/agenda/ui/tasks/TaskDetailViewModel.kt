@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import com.organizador.agenda.R
 import com.organizador.agenda.di.ApplicationScope
 import com.organizador.agenda.domain.model.Priority
+import com.organizador.agenda.domain.model.Recurrence
 import com.organizador.agenda.domain.model.Tag
 import com.organizador.agenda.domain.model.Task
 import com.organizador.agenda.domain.repository.SettingsRepository
@@ -18,6 +19,10 @@ import com.organizador.agenda.ui.common.Messenger
 import com.organizador.agenda.ui.common.UiMessage
 import com.organizador.agenda.ui.navigation.TaskDetailRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,10 +31,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import javax.inject.Inject
 
 data class TaskDetailUiState(
     val loaded: Boolean = false,
@@ -109,7 +110,12 @@ class TaskDetailViewModel @Inject constructor(
 
     fun deleteSubtask(subtaskId: Long) = viewModelScope.launch { tasks.deleteSubtask(subtaskId) }
 
-    fun setDone(done: Boolean) = viewModelScope.launch { tasks.setCompleted(id, done) }
+    fun setDone(done: Boolean) = viewModelScope.launch { setTaskDone(tasks, messenger, id, done, confirmDone = false) }
+
+    /** Sem data, a tarefa ganha a primeira data da regra a partir de hoje. */
+    fun setRecurrence(recurrence: Recurrence?) = viewModelScope.launch { tasks.setRecurrence(id, recurrence, today()) }
+
+    private fun today(): LocalDate = state.value.now.takeIf { it != LocalDateTime.MIN }?.toLocalDate() ?: LocalDate.now()
 
     /** Deixa esta tarefa escolhida na aba Foco. */
     fun selectForFocus() = focusSelection.select(id)

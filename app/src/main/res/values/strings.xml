@@ -68,6 +68,9 @@
     <string name="tasks_filter_empty_title">Nada por aqui</string>
     <string name="tasks_filter_empty_body">Nenhuma tarefa neste filtro.</string>
     <string name="msg_task_completed">Tarefa concluída</string>
+    <string name="msg_task_next">Próxima: %1$s</string>
+    <string name="field_repeat">Repetir</string>
+    <string name="repeat_description">Ao concluir, a tarefa vai para a próxima data, com as subtarefas desmarcadas.</string>
     <string name="msg_task_deleted">Tarefa excluída</string>
     <string name="msg_task_created">Tarefa criada</string>
 
@@ -185,7 +188,7 @@
     <string name="capture_send_task">Criar tarefa</string>
     <string name="capture_send_event">Agendar compromisso</string>
     <string name="capture_kind_toggle">Trocar entre tarefa e compromisso</string>
-    <string name="capture_recurrence_note">Repetição ainda não é suportada: o item será criado uma vez só.</string>
+    <string name="capture_recurrence_note">Compromissos que se repetem ficam para o Google Agenda: este será criado uma vez só. Para repetir, crie como tarefa.</string>
     <string name="msg_event_created">Compromisso agendado · %1$s</string>
 
     <!-- Modo foco -->

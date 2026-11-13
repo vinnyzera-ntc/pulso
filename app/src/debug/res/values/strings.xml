@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nome do build debug no aparelho, para não confundir com o app de uso real. -->
+    <string name="app_name">Pulso debug</string>
+</resources>

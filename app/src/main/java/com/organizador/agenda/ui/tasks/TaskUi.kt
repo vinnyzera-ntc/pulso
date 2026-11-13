@@ -10,7 +10,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-enum class ChipIcon { Flag, Clock, Calendar, Subtasks }
+enum class ChipIcon { Flag, Clock, Calendar, Subtasks, Repeat }
 
 data class TaskChipUi(val text: String, val tone: ChipTone = ChipTone.Neutral, val icon: ChipIcon? = null)
 
@@ -33,6 +33,7 @@ object TaskUiMapper {
         priority = task.priority,
         chips = buildList {
             dueChip(task, now)?.let(::add)
+            if (task.dueDate != null) task.recurrence?.let { add(TaskChipUi(PtBr.recurrence(it), icon = ChipIcon.Repeat)) }
             if (task.subtasks.isNotEmpty()) {
                 add(TaskChipUi("${task.subtasks.count { it.done }}/${task.subtasks.size}", icon = ChipIcon.Subtasks))
             }

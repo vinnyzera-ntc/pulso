@@ -27,8 +27,21 @@ data class Task(
     val subtasks: List<Subtask> = emptyList(),
     val tags: List<Tag> = emptyList(),
     val reminders: List<TaskReminder> = emptyList(),
+    /** Só tem sentido com [dueDate]. Concluir uma tarefa que se repete a leva para [nextDue]. */
+    val recurrence: Recurrence? = null,
 ) {
     val isDone: Boolean get() = completedAt != null
+
+    /**
+     * Próximo vencimento ao concluir: a primeira ocorrência depois do vencimento atual ou de hoje
+     * (o que for mais tarde), para uma tarefa atrasada não pular para outra data já vencida.
+     * null = não se repete (concluir conclui de vez).
+     */
+    fun nextDue(today: LocalDate): LocalDate? {
+        val rule = recurrence ?: return null
+        val due = dueDate ?: return null
+        return rule.nextAfter(maxOf(due, today), due)
+    }
 
     /** Momento de vencimento: data + hora, ou só a data (fim do dia não importa aqui). */
     val dueDateTime: LocalDateTime? get() = dueDate?.let { d -> dueTime?.let { d.atTime(it) } }

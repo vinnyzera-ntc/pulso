@@ -3,13 +3,16 @@ package com.organizador.agenda.domain.capture
 import com.organizador.agenda.domain.capture.CaptureKind.Event
 import com.organizador.agenda.domain.capture.CaptureKind.Task
 import com.organizador.agenda.domain.model.Priority
+import com.organizador.agenda.domain.model.Recurrence
+import com.organizador.agenda.domain.model.RecurrenceUnit
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 
 /** "Agora" fixo: terça, 10 de novembro de 2026, 10:00. */
 class CaptureParserTest {
@@ -167,21 +170,63 @@ class CaptureParserTest {
         ),
     )
 
+    // Hoje nos testes: terça, 10/11/2026, 10:00.
     @Test
-    fun repeticao_eReconhecidaMasFicaNoTitulo() {
+    fun repeticao_semanal_comecaNaProximaOcorrencia() {
         val a = parse("academia toda segunda 7h")
-        assertEquals("toda segunda", a.recurrence)
-        assertEquals("Academia toda segunda", a.title)
-        // A "segunda" da repetição não vira data: vale a regra de hora sem data.
-        assertEquals(d(11), a.date)
+        assertEquals(Recurrence.weekly(DayOfWeek.MONDAY), a.recurrence)
+        assertEquals("toda segunda", a.recurrenceText)
+        assertEquals("Academia", a.title)
+        assertEquals(LocalDate.of(2026, 11, 16), a.date)
         assertEquals(t(7), a.time)
 
-        val b = parse("tomar remédio todo dia")
-        assertEquals("todo dia", b.recurrence)
-        assertEquals("Tomar remédio todo dia", b.title)
-        assertNull(b.date)
+        val b = parse("relatório todas as sextas")
+        assertEquals(Recurrence.weekly(DayOfWeek.FRIDAY), b.recurrence)
+        assertEquals(LocalDate.of(2026, 11, 13), b.date)
 
-        assertEquals("todas as sextas", parse("relatório todas as sextas").recurrence)
+        val c = parse("inglês toda segunda e quarta às 19h")
+        assertEquals(Recurrence.weekly(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY), c.recurrence)
+        assertEquals(LocalDate.of(2026, 11, 11), c.date)
+        assertEquals("Inglês", c.title)
+    }
+
+    @Test
+    fun repeticao_diaria_horaPassadaComecaAmanha() {
+        val a = parse("tomar remédio todo dia 8h")
+        assertEquals(Recurrence.daily(), a.recurrence)
+        assertEquals("Tomar remédio", a.title)
+        assertEquals(d(11), a.date)
+        assertEquals(d(10), parse("tomar remédio todo dia 22h").date)
+        assertEquals(d(10), parse("beber água diariamente").date)
+    }
+
+    @Test
+    fun repeticao_mensalAnualEDiasUteis() {
+        val a = parse("pagar aluguel todo dia 5")
+        assertEquals(Recurrence.monthly(5), a.recurrence)
+        assertEquals(LocalDate.of(2026, 12, 5), a.date)
+        assertEquals("Pagar aluguel", a.title)
+
+        assertEquals(Recurrence.monthly(15), parse("fatura todo mês dia 15").recurrence)
+        // "todo mês" sem dia: o dia da data (hoje, se não disser).
+        assertEquals(Recurrence.monthly(10), parse("backup todo mês").recurrence)
+        assertEquals(Recurrence.monthly(20), parse("backup todo mês dia 20/11").let { it.recurrence })
+
+        val y = parse("aniversário da Carol 20/11 todo ano")
+        assertEquals(Recurrence.yearly(), y.recurrence)
+        assertEquals(LocalDate.of(2026, 11, 20), y.date)
+
+        val w = parse("ponto dias úteis 9h")
+        assertEquals(Recurrence(RecurrenceUnit.Weekly, weekdays = Recurrence.WORKDAYS), w.recurrence)
+        assertEquals(d(11), w.date)
+    }
+
+    @Test
+    fun repeticao_aCadaN() {
+        assertEquals(Recurrence.daily(15), parse("trocar filtro a cada 15 dias").recurrence)
+        assertEquals(Recurrence.weekly(DayOfWeek.TUESDAY, interval = 2), parse("faxina a cada 2 semanas").recurrence)
+        assertEquals(Recurrence.weekly(DayOfWeek.FRIDAY, interval = 2), parse("faxina sexta a cada 2 semanas").recurrence)
+        assertEquals(Recurrence.monthly(10, 3), parse("revisão a cada 3 meses").recurrence)
         assertNull(parse("ligar amanhã").recurrence)
     }
 
@@ -195,8 +240,7 @@ class CaptureParserTest {
         )
         val q = parse("reunião sexta 14h por 1h p2")
         assertEquals(listOf(SpanType.Date, SpanType.Time, SpanType.Duration, SpanType.Priority), q.spans.map { it.type })
-        // A repetição não é destacada (não é "entendida" a ponto de agir).
-        assertTrue(parse("academia toda segunda").spans.isEmpty())
+        assertEquals(listOf(SpanType.Recurrence), parse("academia toda segunda").spans.map { it.type })
     }
 
     @Test

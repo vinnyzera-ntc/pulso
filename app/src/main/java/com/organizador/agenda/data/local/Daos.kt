@@ -38,6 +38,23 @@ interface TaskDao {
     @Query("DELETE FROM tasks WHERE id = :id")
     suspend fun deleteTask(id: Long)
 
+    @Query("UPDATE tasks SET recurrence = :recurrence, updated_at = :now WHERE id = :id")
+    suspend fun setRecurrence(id: Long, recurrence: String?, now: Instant)
+
+    @Query("UPDATE tasks SET due_date = :dueDate, completed_at = NULL, updated_at = :now WHERE id = :id")
+    suspend fun setDueDate(id: Long, dueDate: LocalDate, now: Instant)
+
+    @Query("UPDATE subtasks SET done = 0 WHERE task_id = :taskId")
+    suspend fun resetSubtasks(taskId: Long)
+
+    /** Concluir uma tarefa que se repete: vai para [next], subtarefas desmarcadas, sem adiamentos. */
+    @Transaction
+    suspend fun advanceRecurring(id: Long, next: LocalDate, now: Instant) {
+        setDueDate(id, next, now)
+        resetSubtasks(id)
+        clearSnoozes(id)
+    }
+
     // Subtarefas
     @Insert
     suspend fun insertSubtasks(items: List<SubtaskEntity>): List<Long>

@@ -12,9 +12,13 @@ import com.organizador.agenda.domain.task.DayProgress
 import com.organizador.agenda.domain.task.TaskLists
 import com.organizador.agenda.domain.time.NowProvider
 import com.organizador.agenda.domain.time.PtBr
+import com.organizador.agenda.ui.common.Messenger
 import com.organizador.agenda.ui.tasks.TaskRowUi
 import com.organizador.agenda.ui.tasks.TaskUiMapper
+import com.organizador.agenda.ui.tasks.setTaskDone
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDateTime
+import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,8 +30,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import javax.inject.Inject
 
 /** O cartão "Agora" (em andamento) ou "Próximo". */
 data class EventCardUi(
@@ -59,6 +61,7 @@ class TodayViewModel @Inject constructor(
     private val calendar: CalendarRepository,
     settings: SettingsRepository,
     private val nowProvider: NowProvider,
+    private val messenger: Messenger,
 ) : ViewModel() {
 
     private val ticks = nowProvider.minuteTicks
@@ -118,7 +121,7 @@ class TodayViewModel @Inject constructor(
         }
     }
 
-    fun setDone(id: Long, done: Boolean) = viewModelScope.launch { tasks.setCompleted(id, done) }
+    fun setDone(id: Long, done: Boolean) = viewModelScope.launch { setTaskDone(tasks, messenger, id, done, confirmDone = false) }
 
     /** Ao voltar para o app: a permissão de agenda pode ter mudado nas configurações. */
     fun onResume() = calendar.refresh()

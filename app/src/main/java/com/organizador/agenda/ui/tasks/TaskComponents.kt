@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -28,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.organizador.agenda.R
+import com.organizador.agenda.domain.model.Priority as DomainPriority
 import com.organizador.agenda.domain.model.Tag
 import com.organizador.agenda.domain.time.PtBr
 import com.organizador.agenda.ui.common.FieldPanel
@@ -37,13 +39,12 @@ import com.organizador.agenda.ui.common.PulsoTimePickerDialog
 import com.organizador.agenda.ui.common.SelectableChip
 import com.organizador.agenda.ui.common.useTimeLabel
 import com.organizador.agenda.ui.pulso.Pulso
+import com.organizador.agenda.ui.pulso.components.Priority as RingPriority
 import com.organizador.agenda.ui.pulso.components.PulsoChip
 import com.organizador.agenda.ui.pulso.components.QuickChips
 import com.organizador.agenda.ui.pulso.components.TaskRow
 import java.time.LocalDate
 import java.time.LocalTime
-import com.organizador.agenda.domain.model.Priority as DomainPriority
-import com.organizador.agenda.ui.pulso.components.Priority as RingPriority
 
 /** Prioridade do domínio -> anel do checkbox do kit (P4 = sem cor). */
 fun DomainPriority.toRing(): RingPriority = when (this) {
@@ -58,6 +59,7 @@ fun ChipIcon.vector(): ImageVector = when (this) {
     ChipIcon.Clock -> Icons.Outlined.Schedule
     ChipIcon.Calendar -> Icons.Outlined.CalendarMonth
     ChipIcon.Subtasks -> Icons.Outlined.Checklist
+    ChipIcon.Repeat -> Icons.Outlined.Repeat
 }
 
 /** Linha de tarefa do kit alimentada por um [TaskRowUi]. */

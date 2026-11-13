@@ -1,6 +1,8 @@
 package com.organizador.agenda.domain.capture
 
 import com.organizador.agenda.domain.model.Priority
+import com.organizador.agenda.domain.model.Recurrence
+import com.organizador.agenda.domain.model.RecurrenceUnit
 import java.text.Normalizer
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -9,7 +11,7 @@ import java.time.LocalTime
 
 enum class CaptureKind { Task, Event }
 
-enum class SpanType { Date, Time, Duration, Tag, Priority }
+enum class SpanType { Date, Time, Duration, Tag, Priority, Recurrence }
 
 /** Um trecho do texto que o parser entendeu (para destacar no campo). */
 data class CaptureSpan(val range: IntRange, val type: SpanType)
@@ -25,8 +27,10 @@ data class ParsedCapture(
     val durationMinutes: Int?,
     val tags: List<String>,
     val priority: Priority,
-    /** Trecho de repetição ("toda segunda"): reconhecido, mas ainda não suportado; fica no título. */
-    val recurrence: String?,
+    /** Repetição entendida ("toda segunda", "todo dia 5", "a cada 2 semanas"), já presa à [date]. */
+    val recurrence: Recurrence?,
+    /** O trecho do texto que virou a repetição, para mostrar. */
+    val recurrenceText: String?,
     val spans: List<CaptureSpan>,
 ) {
     val isEmpty: Boolean get() = title.isBlank()
@@ -62,9 +66,17 @@ object CaptureParser {
 
     private val tagRe = Regex("""(?<!\S)#([\p{L}\d_-]+)""")
     private val priorityRe = Regex("""(?<!\S)!?p([1-4])(?!\S)""")
-    private val recurrenceRe = Regex(
-        """${B}(?:tod[oa]s? (?:[oa]s? )?(?:dias?|semanas?|mes(?:es)?|ano|(?:$WD)s?(?:-feiras?)?)|diariamente|semanalmente|mensalmente)$E""",
-    )
+    // Repetição (na ordem em que são tentadas: as mais específicas primeiro).
+    private val workdaysRe = Regex("""$B(?:tod[oa]s? (?:[oa]s )?)?dias? ute(?:is|l)$E""")
+    private val monthDayRe = Regex("""$B(?:todo dia (\d{1,2})(?: de (?:cada|todo) mes)?|todo mes(?: no)? dia (\d{1,2}))$E""")
+    private val everyNRe = Regex("""${B}a cada (\d{1,2}) (dias?|semanas?|mes(?:es)?|anos?)$E""")
+    private val WDP = """(?:$WD)s?(?:-feiras?)?"""
+    private val weekdayListRe = Regex("""${B}tod[oa]s? (?:[oa]s )?($WDP(?:(?:, ?| e )(?:[oa]s? )?$WDP)*)$E""")
+    private val dailyRe = Regex("""$B(?:todos os dias|todo dia|diariamente)$E""")
+    private val weeklyRe = Regex("""$B(?:toda semana|todas as semanas|semanalmente)$E""")
+    private val monthlyRe = Regex("""$B(?:todo mes|todos os meses|mensalmente)$E""")
+    private val yearlyRe = Regex("""$B(?:todo ano|todos os anos|anualmente)$E""")
+    private val weekdayNameRe = Regex("""($WD)""")
     private val rangeRe = Regex("""${B}das? (\d{1,2})(?:[:h](\d{2})|h)? (?:ate )?(?:as|a) (\d{1,2})(?:[:h](\d{2})|h)?$E""")
     private val durationRe = Regex(
         """${B}(?:por|durante) (?:(meia hora)|(\d{1,3}) ?(horas?|h|minutos?|min|m)(?: ?(?:e )?(\d{1,2})(?: ?(?:minutos?|min|m))?)?)$E""",
@@ -129,10 +141,45 @@ object CaptureParser {
             Priority.of(m.groupValues[1].toInt())
         } ?: Priority.P4
 
-        // 3. Repetição: reconhecida para não virar data ("toda segunda"), mas fica no título.
-        val recurrence = find(recurrenceRe)?.let { m ->
-            take(m.range, null)
-            text.substring(m.range)
+        // 3. Repetição. Antes das datas, para "toda segunda" e "todo dia 5" não virarem uma data só.
+        // Semanal sem dia dito ("toda semana") pega o dia da data resolvida mais abaixo.
+        var rule: Recurrence? = null
+        var weeklyInterval: Int? = null
+        var recurrenceText: String? = null
+        fun recur(m: MatchResult, r: Recurrence?, weeklyEvery: Int? = null) {
+            take(m.range, SpanType.Recurrence)
+            recurrenceText = text.substring(m.range)
+            rule = r
+            weeklyInterval = weeklyEvery
+        }
+        run {
+            find(workdaysRe)?.let { recur(it, Recurrence(RecurrenceUnit.Weekly, weekdays = Recurrence.WORKDAYS)); return@run }
+            find(monthDayRe)?.let { m ->
+                val day = m.groupValues[1].ifEmpty { m.groupValues[2] }.toInt()
+                if (day in 1..31) { recur(m, Recurrence.monthly(day)); return@run }
+            }
+            find(everyNRe)?.let { m ->
+                val n = m.groupValues[1].toInt()
+                if (n in 1..Recurrence.MAX_INTERVAL) {
+                    val unit = m.groupValues[2]
+                    when {
+                        unit.startsWith("dia") -> recur(m, Recurrence.daily(n))
+                        unit.startsWith("semana") -> recur(m, null, weeklyEvery = n)
+                        unit.startsWith("mes") -> recur(m, Recurrence.monthly(null, n))
+                        else -> recur(m, Recurrence.yearly(n))
+                    }
+                    return@run
+                }
+            }
+            find(weekdayListRe)?.let { m ->
+                val days = weekdayNameRe.findAll(m.groupValues[1]).map { weekdays.getValue(it.value) }.toSet()
+                recur(m, Recurrence(RecurrenceUnit.Weekly, weekdays = days))
+                return@run
+            }
+            find(dailyRe)?.let { recur(it, Recurrence.daily()); return@run }
+            find(weeklyRe)?.let { recur(it, null, weeklyEvery = 1); return@run }
+            find(monthlyRe)?.let { recur(it, Recurrence.monthly(null)); return@run }
+            find(yearlyRe)?.let { recur(it, Recurrence.yearly()) }
         }
 
         var time: LocalTime? = null
@@ -242,9 +289,24 @@ object CaptureParser {
             else if (weekdayToday && t <= now.toLocalTime()) date = today.plusWeeks(1)
         }
 
+        // Repetição sem data dita: começa na primeira ocorrência a partir de hoje (ou de amanhã,
+        // se a hora de hoje já passou). Com data dita, a série começa nela.
+        val explicitDate = spans.any { it.type == SpanType.Date }
+        weeklyInterval?.let { n ->
+            val day = date ?: today
+            rule = Recurrence(RecurrenceUnit.Weekly, n, setOf(day.dayOfWeek))
+        }
+        rule?.let { r ->
+            if (!explicitDate) {
+                val base = if (t != null && t <= now.toLocalTime()) today.plusDays(1) else today
+                date = r.firstOnOrAfter(base)
+            }
+            rule = r.anchoredOn(date!!)
+        }
+
         val title = buildTitle(text, removed)
         val kind = if (t != null && (duration != null || eventWordsRe.containsMatchIn(normalize(title)))) CaptureKind.Event else CaptureKind.Task
-        return ParsedCapture(text, title, kind, date, t, duration, tags, priority, recurrence, spans.sortedBy { it.range.first })
+        return ParsedCapture(text, title, kind, date, t, duration, tags, priority, rule, recurrenceText, spans.sortedBy { it.range.first })
     }
 
     /** "9", "30", "tarde" -> 21:30. Nulo se a hora não existe. */
@@ -283,7 +345,7 @@ object CaptureParser {
 
     private val danglingRe = Regex("""(?:^|\s)(?:as|a|em|no|na|para|pra|de|e|ate)$""")
 
-    /** O texto original menos os trechos destacados (a repetição fica), limpo de sobras. */
+    /** O texto original menos os trechos destacados, limpo de sobras. */
     private fun buildTitle(text: String, removed: BooleanArray): String {
         val sb = StringBuilder(text.length)
         for (i in text.indices) sb.append(if (removed[i]) ' ' else text[i])

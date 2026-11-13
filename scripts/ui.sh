@@ -5,8 +5,10 @@
 # em primeiro plano. Se outro app estiver na frente (por exemplo, porque um "voltar" saiu do
 # app), a função falha em vez de agir no app errado ou tirar print dele.
 export MSYS_NO_PATHCONV=1  # Git Bash no Windows: não converter /sdcard em caminho local
-PKG="com.organizador.agenda"
-ACTIVITY="$PKG/.MainActivity"
+# Por padrão, o build debug (com.organizador.agenda.debug), que tem o seed e o atalho "-e tela".
+# O release (com.organizador.agenda) tem os dados reais do usuário: PULSO_PKG=com.organizador.agenda.
+PKG="${PULSO_PKG:-com.organizador.agenda.debug}"
+ACTIVITY="$PKG/com.organizador.agenda.MainActivity"
 
 # Falha se o Pulso não estiver em primeiro plano.
 fg() {

@@ -94,8 +94,11 @@ class CaptureAndFocusTest {
         assertFalse(state("#casa").canSend)
         assertTrue(state("#casa").chips.isEmpty())
         val r = state("academia toda segunda 7h")
-        assertTrue(r.hasRecurrence)
+        assertFalse("tarefa repete de verdade", r.recurrenceIgnored)
+        assertTrue(r.chips.any { it.text == "Toda segunda" })
         assertTrue(r.canSend)
+        // Como compromisso, a repetição fica de fora (avisa).
+        assertTrue(state("academia toda segunda 7h", override = CaptureKind.Event).recurrenceIgnored)
     }
 
     // ---------- Captura: criar ----------

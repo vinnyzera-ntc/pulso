@@ -44,6 +44,11 @@ android {
     }
 
     buildTypes {
+        // O debug convive com o release instalado no aparelho do usuário (outro pacote, outros
+        // dados): testes e seeds nunca tocam nas tarefas reais.
+        debug {
+            applicationIdSuffix = ".debug"
+        }
         release {
             signingConfigs.findByName("release")?.let { signingConfig = it }
             optimization {

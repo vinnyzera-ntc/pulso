@@ -109,12 +109,12 @@ fun CaptureScreen(onClose: () -> Unit, viewModel: CaptureViewModel = hiltViewMod
                     },
                 )
 
-                if (state.chips.isNotEmpty() || state.hasRecurrence) {
+                if (state.chips.isNotEmpty() || state.recurrenceIgnored) {
                     SectionLabel(stringResource(R.string.capture_understood), Modifier.padding(top = 20.dp, bottom = 8.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         state.chips.forEach { PulsoChip(it.text, tone = it.tone, icon = it.icon?.vector()) }
                     }
-                    if (state.hasRecurrence) {
+                    if (state.recurrenceIgnored) {
                         Text(stringResource(R.string.capture_recurrence_note), style = Pulso.type.bodyS, color = c.text2, modifier = Modifier.padding(top = 8.dp))
                     }
                 }

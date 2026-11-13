@@ -3,6 +3,7 @@ package com.organizador.agenda.data.local
 import com.organizador.agenda.domain.model.FocusKind
 import com.organizador.agenda.domain.model.FocusSession
 import com.organizador.agenda.domain.model.Priority
+import com.organizador.agenda.domain.model.Recurrence
 import com.organizador.agenda.domain.model.Subtask
 import com.organizador.agenda.domain.model.Tag
 import com.organizador.agenda.domain.model.Task
@@ -24,6 +25,7 @@ fun TaskWithDetails.toDomain(): Task = Task(
     reminders = reminders.sortedBy { it.offsetMinutes }.map {
         TaskReminder(it.id, it.offsetMinutes, it.snoozedUntil, it.firedAt)
     },
+    recurrence = Recurrence.decode(task.recurrence),
 )
 
 fun Task.toEntity(now: Instant): TaskEntity = TaskEntity(
@@ -36,6 +38,7 @@ fun Task.toEntity(now: Instant): TaskEntity = TaskEntity(
     completedAt = completedAt,
     createdAt = if (id == 0L) now else createdAt,
     updatedAt = now,
+    recurrence = if (dueDate == null) null else recurrence?.encode(),
 )
 
 /** "#Pessoal " -> "pessoal". */

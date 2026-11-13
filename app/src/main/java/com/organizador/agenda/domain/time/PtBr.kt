@@ -1,5 +1,7 @@
 package com.organizador.agenda.domain.time
 
+import com.organizador.agenda.domain.model.Recurrence
+import com.organizador.agenda.domain.model.RecurrenceUnit
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -90,4 +92,32 @@ object PtBr {
     fun inMinutes(minutes: Long): String = if (minutes <= 0) "agora" else "em ${duration(minutes.toInt())}"
 
     fun String.capitalized(): String = replaceFirstChar { it.titlecase(locale) }
+
+    /** "Todo dia", "Dias úteis", "Toda segunda e quarta", "Todo dia 5", "A cada 2 semanas (seg)". */
+    fun recurrence(r: Recurrence): String = when (r.unit) {
+        RecurrenceUnit.Daily -> if (r.interval == 1) "Todo dia" else "A cada ${r.interval} dias"
+        RecurrenceUnit.Weekly -> {
+            val days = r.weekdays.sortedBy { it.value }
+            when {
+                r.interval == 1 && r.weekdays == Recurrence.WORKDAYS -> "Dias úteis"
+                r.interval == 1 && days.size == 7 -> "Todo dia"
+                r.interval == 1 && days.size == 1 -> everyWeekday(days.single())
+                r.interval == 1 -> "Toda " + list(days.map { weekdayShort(it) })
+                else -> "A cada ${r.interval} semanas (" + list(days.map { weekdayShort(it) }) + ")"
+            }
+        }
+        RecurrenceUnit.Monthly -> {
+            val day = r.monthDay?.let { " $it" }.orEmpty()
+            if (r.interval == 1) "Todo dia${day.ifEmpty { " do mês" }}" else "A cada ${r.interval} meses${if (day.isEmpty()) "" else ", dia$day"}"
+        }
+        RecurrenceUnit.Yearly -> if (r.interval == 1) "Todo ano" else "A cada ${r.interval} anos"
+    }
+
+    /** "Toda segunda", "Todo sábado". */
+    private fun everyWeekday(day: DayOfWeek): String =
+        (if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) "Todo " else "Toda ") + weekday(day)
+
+    /** "seg, qua e sex". */
+    private fun list(items: List<String>): String =
+        if (items.size <= 1) items.joinToString() else items.dropLast(1).joinToString(", ") + " e " + items.last()
 }

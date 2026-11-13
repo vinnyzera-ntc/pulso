@@ -9,8 +9,10 @@
 # O modo noturno original do aparelho é restaurado no fim, mesmo se o script falhar.
 set -euo pipefail
 
-PKG="com.organizador.agenda"
-ACTIVITY="$PKG/.MainActivity"
+# Por padrão, o build debug (com.organizador.agenda.debug), que tem o seed e o atalho "-e tela".
+# O release (com.organizador.agenda) tem os dados reais do usuário: PULSO_PKG=com.organizador.agenda.
+PKG="${PULSO_PKG:-com.organizador.agenda.debug}"
+ACTIVITY="$PKG/com.organizador.agenda.MainActivity"
 OUT_DIR="$(cd "$(dirname "$0")/.." && pwd)/prints/${1:?pasta de saída}"
 shift
 SCREENS=("$@")

@@ -5,6 +5,7 @@ import com.organizador.agenda.R
 import com.organizador.agenda.domain.model.Attendee
 import com.organizador.agenda.domain.model.EventDetails
 import com.organizador.agenda.domain.model.Priority
+import com.organizador.agenda.domain.model.Recurrence
 import com.organizador.agenda.domain.model.Task
 import com.organizador.agenda.domain.task.DayProgress
 import com.organizador.agenda.domain.task.TaskFilter
@@ -19,6 +20,10 @@ import com.organizador.agenda.ui.tasks.NewTaskDraft
 import com.organizador.agenda.ui.tasks.NewTaskViewModel
 import com.organizador.agenda.ui.tasks.TasksViewModel
 import com.organizador.agenda.ui.today.TodayViewModel
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -34,10 +39,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ViewModelsTest {
@@ -53,6 +54,29 @@ class ViewModelsTest {
     // ---------- Hoje ----------
 
     @Test
+    fun tarefas_concluirTarefaQueSeRepete_vaiParaAProximaEDesfazVolta() = runTest(dispatcher) {
+        val id = tasks.save(
+            Task(
+                title = "Pagar aluguel", dueDate = today.minusDays(5), recurrence = Recurrence.monthly(5),
+                subtasks = listOf(com.organizador.agenda.domain.model.Subtask(title = "Pix", done = true)),
+            ),
+        )
+        tasks.today = today
+        val vm = TasksViewModel(tasks, now, messenger)
+        vm.setDone(id, true)
+        val t = tasks.getTask(id)!!
+        assertFalse("não fica concluída", t.isDone)
+        assertEquals(LocalDate.of(2026, 12, 5), t.dueDate)
+        assertFalse("subtarefas desmarcadas", t.subtasks.single().done)
+        val message = messenger.messages.first()
+        assertEquals(R.string.msg_task_next, message.text)
+        assertEquals(listOf("Sáb, 5 dez"), message.args)
+        messenger.runAction(message)
+        assertEquals(today.minusDays(5), tasks.getTask(id)!!.dueDate)
+    }
+
+
+    @Test
     fun hoje_progressoTarefasECompromissoDeAgora() = runTest(dispatcher) {
         tasks.save(Task(title = "Atrasada", dueDate = today.minusDays(1)))
         tasks.save(Task(title = "Às 14", dueDate = today, dueTime = LocalTime.of(14, 0)))
@@ -65,7 +89,7 @@ class ViewModelsTest {
         val calendar = FakeCalendarRepository(listOf(deviceCalendar(1)), listOf(event))
         calendar.details = mapOf(5L to EventDetails(event, "", "UTC", listOf(Attendee("Ana Lima", "ana@x.com")), emptyList(), null))
 
-        val vm = TodayViewModel(tasks, calendar, FakeSettingsRepository(), now)
+        val vm = TodayViewModel(tasks, calendar, FakeSettingsRepository(), now, messenger)
         vm.state.test {
             val s = expectMostRecentItem()
             assertEquals("Terça · 10 nov", s.eyebrow)
@@ -93,7 +117,7 @@ class ViewModelsTest {
             listOf(calendarEvent(1, start, start.plusSeconds(3600), "Almoço"), calendarEvent(2, now.instant().minusSeconds(60), start, "Oculto", calendarId = 2)),
         )
         val settings = FakeSettingsRepository().apply { setCalendarVisible(2, false) }
-        val vm = TodayViewModel(tasks, calendar, settings, now)
+        val vm = TodayViewModel(tasks, calendar, settings, now, messenger)
         vm.state.test {
             val card = expectMostRecentItem().event!!
             assertFalse(card.live)
@@ -105,7 +129,7 @@ class ViewModelsTest {
     @Test
     fun hoje_semPermissao_eConcluirTarefa() = runTest(dispatcher) {
         val id = tasks.save(Task(title = "A", dueDate = today))
-        val vm = TodayViewModel(tasks, FakeCalendarRepository(permission = false), FakeSettingsRepository(), now)
+        val vm = TodayViewModel(tasks, FakeCalendarRepository(permission = false), FakeSettingsRepository(), now, messenger)
         vm.state.test {
             val s = expectMostRecentItem()
             assertFalse(s.calendarConnected)

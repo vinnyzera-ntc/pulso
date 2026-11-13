@@ -70,13 +70,8 @@ class TasksViewModel @Inject constructor(
     }
     fun toggleCompleted() = options.update { it.copy(completedExpanded = !it.completedExpanded) }
 
-    fun setDone(id: Long, done: Boolean) = viewModelScope.launch {
-        tasks.setCompleted(id, done)
-        // Ao concluir, a tarefa some para "Concluídas" (recolhidas): oferece desfazer.
-        if (done) {
-            messenger.show(UiMessage(R.string.msg_task_completed, R.string.action_undo) { tasks.setCompleted(id, false) })
-        }
-    }
+    // Ao concluir, a tarefa some para "Concluídas" (recolhidas): oferece desfazer.
+    fun setDone(id: Long, done: Boolean) = viewModelScope.launch { setTaskDone(tasks, messenger, id, done, confirmDone = true) }
 
     companion object {
         /** Montagem do estado, pura (testada em JVM). */
