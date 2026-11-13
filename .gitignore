@@ -24,3 +24,5 @@ local.properties
 # Assinatura de release (chave e senhas ficam só nesta máquina)
 /keystore
 keystore.properties
+# Skill pessoal de design (fica só nesta máquina)
+/.claude/skills/

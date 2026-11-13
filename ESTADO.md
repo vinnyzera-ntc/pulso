@@ -36,7 +36,7 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 
 ## Aparelho de teste
 
-- Aparelho de teste. Configurações restauradas ao fim da fase 5: night mode = yes, `stay_on_while_plugged_in` = 0, `animator_duration_scale` = 1.0, `user_rotation` = 0, `font_scale` = 1.0.
+- Configurações restauradas ao fim da fase 5: night mode = yes, `stay_on_while_plugged_in` = 0, `animator_duration_scale` = 1.0, `user_rotation` = 0, `font_scale` = 1.0.
 - Pacote de teste desinstalado; seed `limpar` rodado (sem tarefas de exemplo nem agenda "Pulso Teste").
 - Para dirigir o app: `source scripts/ui.sh`, `scripts/prints.sh`, seed de debug (`-e seed demo|demo-proximo|foco:<min>|lembrete:<min>|recentes|limpar`). `center`/`tap` e `tap_text.sh` procuram primeiro o texto visível (o círculo de concluir tem descrição "Concluir: <título>").
 
