@@ -36,7 +36,7 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 ## Próximos passos
 
 ### Depois da v1
-- Interface Liquid Glass (decidir antes: substitui o Pulso inteiro ou só superfícies flutuantes).
+- Interface Liquid Glass **só nas superfícies flutuantes** (nav pill, folhas, cartões flutuantes); o resto segue no Pulso. Decidido em 12/11/2026.
 - Widget de tela inicial.
 
 ### Fora do escopo (definitivo)

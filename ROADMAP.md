@@ -15,10 +15,10 @@ App pessoal, como um bloco de notas para anotar lembretes e alarmes, de uso indi
 
 ## Depois da v1
 
-- **Interface Liquid Glass.** Trocar a linguagem visual atual (Pulso: superfícies opacas com
-  hairlines) por um estilo Liquid Glass (superfícies translúcidas com desfoque e refração).
-  A decidir antes de começar: se substitui o Pulso por inteiro ou só as superfícies flutuantes
-  (nav pill, folhas, cartões), mantendo os papéis de cor (ação, tempo, concluído, atraso).
+- **Interface Liquid Glass só nas superfícies flutuantes** (decidido em 12/11/2026): nav pill,
+  folhas e cartões flutuantes ganham estilo Liquid Glass (translúcido, com desfoque e refração).
+  O resto do app continua no Pulso (superfícies opacas com hairlines), mantendo os papéis de cor
+  (ação, tempo, concluído, atraso).
 - Widget de tela inicial.
 
 ## Fora do escopo
