@@ -40,12 +40,20 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 - Pacote de teste desinstalado; seed `limpar` rodado (sem tarefas de exemplo nem agenda "Pulso Teste").
 - Para dirigir o app: `source scripts/ui.sh`, `scripts/prints.sh`, seed de debug (`-e seed demo|demo-proximo|foco:<min>|lembrete:<min>|recentes|limpar`). `center`/`tap` e `tap_text.sh` procuram primeiro o texto visível (o círculo de concluir tem descrição "Concluir: <título>").
 
+## GitHub
+
+- Repositório: https://github.com/vinnyzera-ntc/pulso (criado em 12/11/2026), licença MIT.
+- README, CONTRIBUTING, CODE_OF_CONDUCT e prints de demonstração em `docs/screenshots`.
+- Releases trazem o APK assinado (`pulso-<versão>.apk`) para instalar direto no celular. A cada
+  versão nova: subir `versionCode`/`versionName`, `./gradlew :app:assembleRelease`, criar a tag
+  `v<versão>` e anexar o APK com `gh release create`. Sempre com a mesma chave, senão o APK novo
+  não instala por cima.
+
 ## Próximos passos
 
 ### Ideias em aberto (nenhuma combinada)
 - Repetição também no formulário "Novo item" (hoje: Captura e detalhe da tarefa).
 - Ligar a otimização R8 no release.
-- GitHub: fica só local por decisão do usuário (12/11/2026).
 
 ### Fora do escopo (definitivo)
 - Follow-ups/acompanhamentos de terceiros; backend e contas.
