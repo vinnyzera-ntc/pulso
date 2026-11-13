@@ -9,18 +9,19 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,11 +44,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.organizador.agenda.MainActivity
 import com.organizador.agenda.R
 import com.organizador.agenda.ui.agenda.AgendaScreen
 import com.organizador.agenda.ui.capture.CaptureScreen
 import com.organizador.agenda.ui.common.PulsoSnackbarHost
 import com.organizador.agenda.ui.focus.FocusScreen
+import com.organizador.agenda.ui.pulso.LocalGlassBackdrop
 import com.organizador.agenda.ui.pulso.Pulso
 import com.organizador.agenda.ui.pulso.PulsoMotion
 import com.organizador.agenda.ui.pulso.components.BottomNavPill
@@ -56,7 +61,6 @@ import com.organizador.agenda.ui.settings.SettingsScreen
 import com.organizador.agenda.ui.tasks.TaskDetailScreen
 import com.organizador.agenda.ui.tasks.TasksScreen
 import com.organizador.agenda.ui.today.TodayScreen
-import com.organizador.agenda.MainActivity
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -129,9 +133,17 @@ fun PulsoNavHost(
         fadeOut(tween(if (reduced) PulsoMotion.QUICK else 180, easing = PulsoMotion.Exit))
     }
 
+    // Liquid Glass: o conteúdo das telas (com o fundo da tela por baixo) é o que o nav pill e
+    // os avisos refratam. As folhas usam o desfoque do sistema (outra janela).
+    val screenBg = if (currentTab == TopLevel.Focus) c.deep else c.bg
+    val backdrop = rememberLayerBackdrop {
+        drawRect(screenBg)
+        drawContent()
+    }
+    CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
     Scaffold(
         // O Foco usa o fundo `deep`; igualar aqui evita uma faixa de outra cor ao lado do recorte da câmera.
-        containerColor = if (currentTab == TopLevel.Focus) c.deep else c.bg,
+        containerColor = screenBg,
         contentWindowInsets = WindowInsets(0),
         snackbarHost = {
             // Com o nav pill, o Scaffold já põe o snackbar acima dele; sem ele, sobe da barra de gestos.
@@ -161,7 +173,7 @@ fun PulsoNavHost(
             navController = navController,
             startDestination = startRoute ?: TopLevel.Today.route,
             // Em paisagem a câmera frontal fica na lateral: o conteúdo desvia dela.
-            modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
+            modifier = Modifier.fillMaxSize().layerBackdrop(backdrop).windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
             enterTransition = enter,
             exitTransition = exit,
             popEnterTransition = { fadeIn(tween(if (reduced) PulsoMotion.QUICK else PulsoMotion.BASE)) },
@@ -199,6 +211,7 @@ fun PulsoNavHost(
                 )
             }
         }
+    }
     }
 
     sheet?.let { request -> NewItemSheet(request, onDismiss = { sheet = null }) }

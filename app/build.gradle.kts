@@ -99,6 +99,9 @@ dependencies {
     // Widget de tela inicial (Compose para widgets).
     implementation(libs.androidx.glance.appwidget)
 
+    // Liquid Glass nas superfícies flutuantes: desfoque + refração do conteúdo por trás (Android 12+/13+).
+    implementation(libs.kyant.backdrop)
+
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)

@@ -5,14 +5,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +30,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.organizador.agenda.ui.pulso.Pulso
 import com.organizador.agenda.ui.pulso.PulsoMotion
+import com.organizador.agenda.ui.pulso.glass
+import com.organizador.agenda.ui.pulso.glassVeil
 
 data class NavItem(val label: String, val icon: ImageVector)
 
@@ -64,9 +66,9 @@ fun BottomNavPill(
             Modifier
                 .weight(1f)
                 .height(58.dp)
+                // Liquid Glass (superfície flutuante); sem suporte, o pill opaco de antes.
+                .glass(CircleShape, veil = c.glassVeil, fallback = c.surface2.copy(alpha = 0.94f))
                 .clip(CircleShape)
-                .background(c.surface2.copy(alpha = 0.94f))
-                .border(1.dp, c.line, CircleShape)
                 .padding(6.dp)
                 .selectableGroup(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -78,7 +80,7 @@ fun BottomNavPill(
                     Modifier
                         .height(46.dp)
                         .clip(CircleShape)
-                        .background(if (on) c.surface4 else Color.Transparent)
+                        .background(if (on) c.surface4.copy(alpha = 0.85f) else Color.Transparent)
                         .selectable(selected = on, role = Role.Tab) { onSelect(i) }
                         .semantics { contentDescription = item.label }
                         .animateContentSize(tween(PulsoMotion.BASE, easing = PulsoMotion.Standard))

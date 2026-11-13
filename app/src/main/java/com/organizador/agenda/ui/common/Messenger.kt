@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.organizador.agenda.R
 import com.organizador.agenda.di.ApplicationScope
 import com.organizador.agenda.ui.pulso.Pulso
+import com.organizador.agenda.ui.pulso.glass
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
@@ -89,7 +90,7 @@ class Messenger @Inject constructor(@param:ApplicationScope private val scope: C
         }
 }
 
-/** Snackbar Pulso: surface3 + hairline, raio 14, texto + ação em emberText. */
+/** Snackbar Pulso: vidro (Liquid Glass) ou, sem suporte, surface3 + hairline; raio 14, ação em emberText. */
 @Composable
 fun PulsoSnackbarHost(state: SnackbarHostState, modifier: Modifier = Modifier) {
     SnackbarHost(state, modifier) { data -> PulsoSnackbar(data) }
@@ -104,8 +105,8 @@ private fun PulsoSnackbar(data: SnackbarData) {
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .fillMaxWidth()
             .heightIn(min = 52.dp)
-            .background(c.surface3, shape)
-            .border(1.dp, c.line, shape)
+            // Aviso é texto sobre qualquer coisa (até o botão ember): desfoque forte e véu denso.
+            .glass(shape, veil = c.surface3.copy(alpha = 0.82f), fallback = c.surface3, blurDp = 16)
             .padding(start = 16.dp, end = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

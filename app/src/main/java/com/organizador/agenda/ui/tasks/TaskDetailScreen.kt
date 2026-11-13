@@ -270,6 +270,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.TaskDetailContent(
                 stringResource(R.string.field_repeat), options, current,
                 { it?.let(PtBr::recurrence) ?: "Não se repete" }, vm::setRecurrence, dismiss,
                 description = stringResource(R.string.repeat_description),
+                vertical = true,
             )
         }
         DetailSheet.Priority -> ChoiceSheet(
