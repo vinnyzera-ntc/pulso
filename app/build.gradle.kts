@@ -96,6 +96,9 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
 
+    // Widget de tela inicial (Compose para widgets).
+    implementation(libs.androidx.glance.appwidget)
+
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)

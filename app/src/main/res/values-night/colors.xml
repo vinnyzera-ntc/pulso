@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="pulso_bg">#FF0E0E0F</color>
+
+    <!-- Widget: tokens do Pulso escuro (Graphite). -->
+    <color name="widget_bg">#FF0E0E0F</color>
+    <color name="widget_surface">#FF19191B</color>
+    <color name="widget_text">#FFF4F4F5</color>
+    <color name="widget_text2">#FFA1A1A7</color>
+    <color name="widget_volt_text">#FF2F95F5</color>
+    <color name="widget_flare_text">#FFFF4F5E</color>
+    <color name="widget_ember">#FFFF7631</color>
+    <color name="widget_on_ember">#FF170A04</color>
+    <color name="widget_ring">#FF3A3A3E</color>
 </resources>

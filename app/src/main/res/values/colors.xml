@@ -2,4 +2,15 @@
 <resources>
     <!-- Só para o tema de janela (XML). As telas usam Pulso.colors. -->
     <color name="pulso_bg">#FFF2F4F3</color>
+
+    <!-- Widget (Glance não usa o tema Compose): tokens do Pulso claro; o escuro em values-night. -->
+    <color name="widget_bg">#FFF2F4F3</color>
+    <color name="widget_surface">#FFFFFFFF</color>
+    <color name="widget_text">#FF0E1413</color>
+    <color name="widget_text2">#FF4D5856</color>
+    <color name="widget_volt_text">#FF0A5FB8</color>
+    <color name="widget_flare_text">#FFC21F35</color>
+    <color name="widget_ember">#FFFF6B22</color>
+    <color name="widget_on_ember">#FF160904</color>
+    <color name="widget_ring">#FFC9D0CD</color>
 </resources>

@@ -56,6 +56,7 @@ import com.organizador.agenda.ui.settings.SettingsScreen
 import com.organizador.agenda.ui.tasks.TaskDetailScreen
 import com.organizador.agenda.ui.tasks.TasksScreen
 import com.organizador.agenda.ui.today.TodayScreen
+import com.organizador.agenda.MainActivity
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -66,6 +67,8 @@ fun PulsoNavHost(
     openFocusSignal: Int = 0,
     /** Toque num lembrete: abre o detalhe da tarefa por cima da aba atual. */
     openTask: OpenTaskRequest? = null,
+    /** Atalho do widget: Captura rápida, Agenda ou Tarefas. */
+    openScreen: OpenScreenRequest? = null,
     navController: NavHostController = rememberNavController(),
     appViewModel: AppViewModel = hiltViewModel(),
 ) {
@@ -77,6 +80,13 @@ fun PulsoNavHost(
     }
     LaunchedEffect(seedMode) { seedMode?.let(appViewModel::seedOnce) }
     LaunchedEffect(openFocusSignal) { if (openFocusSignal > 0) navController.navigateToTab(TopLevel.Focus) }
+    LaunchedEffect(openScreen) {
+        when (openScreen?.target) {
+            MainActivity.OPEN_CAPTURE -> navController.navigate(CaptureRoute) { launchSingleTop = true }
+            MainActivity.OPEN_AGENDA -> navController.navigateToTab(TopLevel.Agenda)
+            MainActivity.OPEN_TASKS -> navController.navigateToTab(TopLevel.Tasks)
+        }
+    }
     LaunchedEffect(openTask) {
         openTask?.let { navController.navigate(TaskDetailRoute(it.taskId)) { launchSingleTop = true } }
     }

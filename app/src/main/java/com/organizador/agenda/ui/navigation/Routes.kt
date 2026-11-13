@@ -23,6 +23,9 @@ import kotlinx.serialization.Serializable
 /** Pedido de abrir uma tarefa vindo de fora (notificação). Classe comum: cada toque é um pedido novo. */
 class OpenTaskRequest(val taskId: Long)
 
+/** Pedido de abrir uma tela vinda do widget ([com.organizador.agenda.MainActivity.OPEN_CAPTURE]...). */
+class OpenScreenRequest(val target: String)
+
 /** Destinos do nav pill, na ordem em que aparecem. `key` é usado pelo atalho de debug (-e tela). */
 enum class TopLevel(val key: String, val route: Any, @StringRes val label: Int, val icon: ImageVector) {
     Today("hoje", TodayRoute, R.string.nav_today, Icons.Outlined.WbSunny),

@@ -218,6 +218,10 @@
     <string name="msg_no_calendar">Nenhuma agenda disponível para criar o compromisso. Confira o acesso à agenda em Ajustes.</string>
     <string name="msg_action_failed">Não foi possível concluir. Tente de novo.</string>
     <string name="task_checkbox_label">Concluir: %1$s</string>
+    <string name="widget_title">Hoje</string>
+    <string name="widget_description">Tarefas de hoje e o próximo compromisso</string>
+    <string name="widget_empty">Nada pendente para hoje.</string>
+    <string name="widget_more">+%1$d mais</string>
     <string name="reminder_channel">Lembretes de tarefas</string>
     <string name="reminder_channel_desc">Aviso no horário dos lembretes das tarefas.</string>
     <string name="reminder_action_done">Concluir</string>
