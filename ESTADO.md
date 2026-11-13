@@ -24,7 +24,9 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 
 - `./gradlew :app:assembleRelease` gera `app/build/outputs/apk/release/app-release.apk`, versão **1.0.0**, assinado.
 - Chave em `keystore/pulso-release.jks`, senhas em `keystore.properties` (os dois **fora do git**). **Fazer cópia de segurança dos dois**: sem eles não é possível instalar atualizações por cima.
-- O aparelho de teste tem o build **debug** (outra assinatura). Para trocar pelo release é preciso desinstalar o debug antes, o que apaga as tarefas locais (as agendas do Google não são afetadas).
+- **O release 1.0.0 está instalado no aparelho de teste desde 12/11/2026** (no lugar do debug, que não tinha tarefas reais). Permissões de agenda e notificações concedidas pelo usuário.
+- Teste de reinício feito no aparelho com o release: o alarme foi rearmado sozinho após o boot e o lembrete tocou no horário (22:31), sem abrir o app. O teste de troca de fuso foi dispensado pelo usuário (sem viagem prevista); o comportamento está coberto por testes unitários.
+- Atenção: o adb não consegue usar `run-as` nem o seed de debug no release. Para testes com seed, instalar o debug exigiria desinstalar o release (apaga os dados reais). Testes no aparelho daqui em diante devem ser feitos pela interface, sem apagar dados do usuário.
 - Minificação (R8) segue desligada no release.
 
 ## Aparelho de teste
