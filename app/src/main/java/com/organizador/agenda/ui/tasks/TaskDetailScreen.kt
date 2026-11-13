@@ -359,7 +359,7 @@ private fun SubtaskRow(
     val commit = { if (latest.trim() != saved) onRename(latest) }
     DisposableEffect(sub.id) { onDispose { commit() } }
     Row(Modifier.fillMaxWidth().connector(c.lineStrong, above = !first, below = !last), verticalAlignment = Alignment.CenterVertically) {
-        PriorityCheckbox(sub.done, onDone, contentDescription = sub.title)
+        PriorityCheckbox(sub.done, onDone, contentDescription = stringResource(R.string.task_checkbox_label, sub.title))
         PlainTextField(
             value = text,
             onValueChange = { text = it },

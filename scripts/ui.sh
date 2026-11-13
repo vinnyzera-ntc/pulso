@@ -28,20 +28,21 @@ open() {
 # dump: XML da tela atual (UTF-8) na saída padrão.
 dump() { fg || return 1; adb shell uiautomator dump /sdcard/pulso_ui.xml >/dev/null; adb shell cat /sdcard/pulso_ui.xml; }
 
-# center <trecho>: "x y" do centro do primeiro elemento cujo text ou content-desc contém o trecho.
+# center <trecho>: "x y" do centro do primeiro elemento cujo text (ou, se nenhum, content-desc) contém o trecho.
 center() {
   dump | python -c '
 import re, sys
 needle = sys.argv[1]
 xml = sys.stdin.buffer.read().decode("utf-8")
-for node in re.finditer(r"<node [^>]*>", xml):
-    n = node.group(0)
-    t = re.search(r"text=\"([^\"]*)\"", n).group(1)
-    d = re.search(r"content-desc=\"([^\"]*)\"", n).group(1)
-    if needle in t or needle in d:
-        x1, y1, x2, y2 = map(int, re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", n).groups())
-        print((x1 + x2) // 2, (y1 + y2) // 2)
-        sys.exit(0)
+nodes = [m.group(0) for m in re.finditer(r"<node [^>]*>", xml)]
+# Texto visível primeiro: a descrição do círculo de concluir ("Concluir: <título>") também contém
+# o título, e tocar nele conclui a tarefa em vez de abri-la.
+for attr in ("text", "content-desc"):
+    for n in nodes:
+        if needle in re.search(attr + r"=\"([^\"]*)\"", n).group(1):
+            x1, y1, x2, y2 = map(int, re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", n).groups())
+            print((x1 + x2) // 2, (y1 + y2) // 2)
+            sys.exit(0)
 sys.exit(1)
 ' "$1" | tr -d '\r'
 }

@@ -35,10 +35,14 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.organizador.agenda.R
 import com.organizador.agenda.ui.pulso.Pulso
 import com.organizador.agenda.ui.pulso.PulsoMotion
 import kotlinx.coroutines.launch
@@ -81,7 +85,10 @@ fun PriorityCheckbox(
             .toggleable(value = checked, role = Role.Checkbox) { now ->
                 if (now && !reduced) scope.launch { halo.snapTo(0f); halo.animateTo(1f, tween(PulsoMotion.HALO)) }
                 onCheckedChange(now)
-            },
+            }
+            // O rótulo fica no alvo de toque: no ícone (escala 0 quando desmarcado) o TalkBack
+            // não o encontrava e anunciava só "caixa de seleção".
+            .then(if (contentDescription != null) Modifier.semantics { this.contentDescription = contentDescription } else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         Box(
@@ -100,7 +107,7 @@ fun PriorityCheckbox(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                Icons.Rounded.Check, contentDescription,
+                Icons.Rounded.Check, null,
                 tint = c.onAurora,
                 modifier = Modifier.size(14.dp).scale(checkScale),
             )
@@ -133,7 +140,8 @@ fun TaskRow(
             .padding(vertical = 2.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        PriorityCheckbox(checked, onCheckedChange, Modifier.offset(x = (-13).dp), priority, contentDescription = title)
+        // "Concluir: título" (com o estado marcado/não marcado lido pelo TalkBack), distinto do título da linha.
+        PriorityCheckbox(checked, onCheckedChange, Modifier.offset(x = (-13).dp), priority, contentDescription = stringResource(R.string.task_checkbox_label, title))
         Column(Modifier.weight(1f).offset(x = (-13).dp).padding(top = 12.dp, bottom = 10.dp, end = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 title,

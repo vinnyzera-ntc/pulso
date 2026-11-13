@@ -12,11 +12,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.rounded.Check
@@ -28,10 +30,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import com.organizador.agenda.ui.pulso.PulsoShapes
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.organizador.agenda.ui.pulso.Pulso
 import com.organizador.agenda.ui.pulso.PulsoMotion
+import com.organizador.agenda.ui.pulso.PulsoShapes
 import kotlinx.coroutines.launch
 
 /** Live indicator: volt dot with an expanding ring. Only for things happening right now. */
@@ -85,8 +87,10 @@ fun NowEventCard(
         },
         onClick = onClick,
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        // FlowRow: com fonte grande, "termina em…" desce inteiro para a linha de baixo.
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.Start)) {
             Text(timeRange, style = Pulso.type.numeric, color = c.text2)
+            Spacer(Modifier.weight(1f))
             Text(remaining, style = Pulso.type.numeric.copy(fontWeight = FontWeight.SemiBold), color = c.voltText)
         }
         Text(title, style = Pulso.type.titleS, color = c.text)

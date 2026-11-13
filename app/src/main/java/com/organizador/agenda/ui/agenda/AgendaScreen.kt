@@ -12,16 +12,15 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -52,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -66,6 +66,7 @@ import com.organizador.agenda.R
 import com.organizador.agenda.domain.model.EventDetails
 import com.organizador.agenda.domain.time.PtBr
 import com.organizador.agenda.ui.common.CALENDAR_PERMISSIONS
+import com.organizador.agenda.ui.common.CappedFontScale
 import com.organizador.agenda.ui.common.CalendarDot
 import com.organizador.agenda.ui.common.DestructiveSecondaryButton
 import com.organizador.agenda.ui.common.PermissionPanel
@@ -82,10 +83,10 @@ import com.organizador.agenda.ui.pulso.components.SecondaryButton
 import com.organizador.agenda.ui.pulso.components.SectionLabel
 import com.organizador.agenda.ui.pulso.components.SegmentedPills
 import com.organizador.agenda.ui.pulso.components.WeekStrip
-import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
+import kotlinx.coroutines.flow.first
 
 private enum class PendingAction { Edit, Cancel }
 
@@ -123,7 +124,7 @@ fun AgendaScreen(
     val ready = state.loaded && state.hasAccess
 
     val header: @Composable () -> Unit = {
-        ScreenHeader(title = state.title, eyebrow = state.eyebrow) {
+        ScreenHeader(title = state.title, eyebrow = state.eyebrow, wideActions = true) {
             SegmentedPills(
                 options = listOf(
                     stringResource(R.string.agenda_view_day),
@@ -142,25 +143,28 @@ fun AgendaScreen(
         if (state.mode == AgendaMode.Week) {
             val onStep by rememberUpdatedState(viewModel::step)
             var dragged by remember { mutableFloatStateOf(0f) }
-            WeekStrip(
-                days = state.weekDays,
-                selected = state.selected,
-                today = state.today,
-                onSelect = viewModel::select,
-                eventCount = { state.eventCounts[it] ?: 0 },
-                locale = PtBr.locale,
-                modifier = Modifier
-                    .padding(horizontal = PulsoSpace.gutter)
-                    .padding(top = 4.dp)
-                    // Deslizar a faixa troca de semana.
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures(
-                            onDragStart = { dragged = 0f },
-                            onHorizontalDrag = { _, amount -> dragged += amount },
-                            onDragEnd = { if (dragged > 80.dp.toPx()) onStep(-1) else if (dragged < -80.dp.toPx()) onStep(1) },
-                        )
-                    },
-            )
+            // 7 colunas fixas: com fonte enorme os rótulos quebrariam; a faixa para em 1,3×.
+            CappedFontScale {
+                WeekStrip(
+                    days = state.weekDays,
+                    selected = state.selected,
+                    today = state.today,
+                    onSelect = viewModel::select,
+                    eventCount = { state.eventCounts[it] ?: 0 },
+                    locale = PtBr.locale,
+                    modifier = Modifier
+                        .padding(horizontal = PulsoSpace.gutter)
+                        .padding(top = 4.dp)
+                        // Deslizar a faixa troca de semana.
+                        .pointerInput(Unit) {
+                            detectHorizontalDragGestures(
+                                onDragStart = { dragged = 0f },
+                                onHorizontalDrag = { _, amount -> dragged += amount },
+                                onDragEnd = { if (dragged > 80.dp.toPx()) onStep(-1) else if (dragged < -80.dp.toPx()) onStep(1) },
+                            )
+                        },
+                )
+            }
         }
         if (state.mode != AgendaMode.Month) AllDayRow(state.allDay, onClick = { allDayDetail = it })
     }
@@ -326,30 +330,32 @@ private fun TimelineScroller(state: AgendaUiState, contentPadding: PaddingValues
 private fun MonthGrid(state: AgendaUiState, onSelect: (LocalDate) -> Unit, modifier: Modifier = Modifier) {
     val c = Pulso.colors
     val month = YearMonth.from(state.selected)
-    Column(modifier) {
-        Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
-            state.monthWeeks.firstOrNull()?.forEach { d ->
-                Text(
-                    PtBr.weekdayShort(d.dayOfWeek).take(1).uppercase(PtBr.locale),
-                    style = Pulso.type.eyebrow,
-                    color = c.text3,
-                    modifier = Modifier.weight(1f),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                )
-            }
-        }
-        state.monthWeeks.forEach { week ->
-            Row(Modifier.fillMaxWidth()) {
-                week.forEach { d ->
-                    DayCell(
-                        date = d,
-                        inMonth = YearMonth.from(d) == month,
-                        selected = d == state.selected,
-                        today = d == state.today,
-                        events = state.eventCounts[d] ?: 0,
-                        onClick = { onSelect(d) },
+    CappedFontScale {
+        Column(modifier) {
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                state.monthWeeks.firstOrNull()?.forEach { d ->
+                    Text(
+                        PtBr.weekdayShort(d.dayOfWeek).take(1).uppercase(PtBr.locale),
+                        style = Pulso.type.eyebrow,
+                        color = c.text3,
                         modifier = Modifier.weight(1f),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     )
+                }
+            }
+            state.monthWeeks.forEach { week ->
+                Row(Modifier.fillMaxWidth()) {
+                    week.forEach { d ->
+                        DayCell(
+                            date = d,
+                            inMonth = YearMonth.from(d) == month,
+                            selected = d == state.selected,
+                            today = d == state.today,
+                            events = state.eventCounts[d] ?: 0,
+                            onClick = { onSelect(d) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
         }

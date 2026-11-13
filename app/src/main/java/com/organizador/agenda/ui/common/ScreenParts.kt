@@ -8,13 +8,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.organizador.agenda.domain.time.PtBr
 import com.organizador.agenda.ui.pulso.Pulso
@@ -37,8 +40,24 @@ fun ScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
     eyebrow: String? = null,
+    /**
+     * Ações largas (ex.: Dia/Semana/Mês). Com fonte grande elas não cabem ao lado do título
+     * (que quebraria no meio da palavra): descem para uma linha própria.
+     */
+    wideActions: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
+    if (wideActions && LocalDensity.current.fontScale >= LARGE_FONT_SCALE) {
+        Column(modifier.fillMaxWidth()) {
+            ScreenHeader(title = title, eyebrow = eyebrow)
+            Row(
+                Modifier.fillMaxWidth().padding(start = PulsoSpace.gutter, end = 8.dp, top = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                content = actions,
+            )
+        }
+        return
+    }
     val c = Pulso.colors
     Row(
         modifier
@@ -60,6 +79,23 @@ fun ScreenHeader(
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically, content = actions)
+    }
+}
+
+/** A partir desta escala de fonte do sistema, layouts apertados mudam de forma. */
+const val LARGE_FONT_SCALE = 1.3f
+
+/**
+ * Limita a escala de fonte do sistema em [content] a [max]. Só para grades de largura fixa
+ * (faixa da semana, mês), onde 7 colunas não podem crescer: o resto da tela segue a escala toda.
+ */
+@Composable
+fun CappedFontScale(max: Float = LARGE_FONT_SCALE, content: @Composable () -> Unit) {
+    val density = LocalDensity.current
+    if (density.fontScale <= max) {
+        content()
+    } else {
+        CompositionLocalProvider(LocalDensity provides Density(density.density, max), content = content)
     }
 }
 

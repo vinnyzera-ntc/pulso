@@ -79,6 +79,8 @@ fun WeekStrip(
                     d.dayOfWeek.getDisplayName(JTextStyle.SHORT, locale).trimEnd('.').uppercase(locale),
                     style = Pulso.type.eyebrow.copy(letterSpacing = Pulso.type.eyebrow.letterSpacing * 0.5f),
                     color = if (sel) c.emberText else c.text3,
+                    maxLines = 1,
+                    softWrap = false,
                 )
                 Text(d.dayOfMonth.toString(), style = Pulso.type.titleS.copy(fontFamily = Pulso.type.numeric.fontFamily, fontFeatureSettings = "tnum"), color = if (sel) c.emberText else c.text)
                 Box(Modifier.height(5.dp), contentAlignment = Alignment.Center) {
