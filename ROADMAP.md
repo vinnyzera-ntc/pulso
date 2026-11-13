@@ -11,7 +11,7 @@ App pessoal, como um bloco de notas para anotar lembretes e alarmes, de uso indi
 | 2 | Hoje e Tarefas | Concluída |
 | 3 | Agenda (dia, semana, mês) e compromissos | Concluída |
 | 4 | Captura rápida (parser pt-BR local) e Modo foco | Concluída |
-| 5 | Lembretes de tarefas, acabamento e revisão | Concluída (aguarda OK) |
+| 5 | Lembretes de tarefas, acabamento e revisão | Concluída |
 
 ## Depois da v1
 

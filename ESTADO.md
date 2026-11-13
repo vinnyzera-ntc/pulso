@@ -4,7 +4,7 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 
 ## Onde estamos
 
-- **Fases 0 a 5 concluídas** e commitadas em `main`. A v1 está completa e **aguarda o OK do usuário** para a fase 5.
+- **Fases 0 a 5 concluídas** e commitadas em `main`. A v1 está completa; fase 5 aprovada pelo usuário em 12/11/2026.
 - Testes na entrega da fase 5: 122 unitários e 15 instrumentados no aparelho, todos passando.
 - Prints da fase 5 em `prints/fase-5` (gitignored): telas nos dois temas (`folha-temas.png`), notificação de lembrete, toque abrindo a tarefa, fonte 2× (`fonte-2x/`) e paisagem (`paisagem/`).
 
