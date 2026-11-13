@@ -125,6 +125,20 @@ class CaptureAndFocusTest {
     }
 
     @Test
+    fun captura_falhaAoGravarNaAgenda_avisaEMantemOTexto() = runTest(dispatcher) {
+        val calendar = FakeCalendarRepository(listOf(deviceCalendar(1, primary = true))).apply { failWrites = true }
+        val vm = CaptureViewModel(tasks, calendar, settings, now, messenger)
+        vm.state.test {
+            vm.setText("reunião com Ana sexta 14h")
+            expectMostRecentItem()
+            vm.send()
+            assertEquals("reunião com Ana sexta 14h", vm.state.value.text)
+        }
+        assertEquals(R.string.msg_calendar_write_failed, messenger.messages.first().text)
+        assertTrue("não entra nas recentes", settings.settings.first().recentCaptures.isEmpty())
+    }
+
+    @Test
     fun captura_enviarCompromisso_criaNaAgendaPadraoComLembreteDosAjustes() = runTest(dispatcher) {
         val calendar = FakeCalendarRepository(listOf(deviceCalendar(1, write = false), deviceCalendar(2, primary = true)))
         settings.setEventReminderMinutes(30)

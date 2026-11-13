@@ -132,7 +132,11 @@ class FakeCalendarRepository(
     val writes = mutableListOf<String>()
     var lastDraft: EventDraft? = null
 
+    /** Simula o provider recusando a escrita (ex.: permissão revogada). */
+    var failWrites = false
+
     override suspend fun createEvent(draft: EventDraft): Long {
+        if (failWrites) throw SecurityException("sem permissão")
         writes += "create"; lastDraft = draft
         return 100
     }

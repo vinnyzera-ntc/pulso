@@ -1,5 +1,6 @@
 package com.organizador.agenda.ui.common
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,15 +22,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.organizador.agenda.R
 import com.organizador.agenda.di.ApplicationScope
 import com.organizador.agenda.ui.pulso.Pulso
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /** Mensagem curta para o snackbar, com ação opcional (tipicamente "Desfazer"). */
 data class UiMessage(
@@ -62,13 +65,28 @@ class Messenger @Inject constructor(@param:ApplicationScope private val scope: C
 
     fun runAction(message: UiMessage) {
         val action = message.action ?: return
-        scope.launch { action() }
+        scope.launch { guard { action() } }
     }
 
     fun runDismissed(message: UiMessage) {
         val onDismissed = message.onDismissed ?: return
-        scope.launch { onDismissed() }
+        scope.launch { guard { onDismissed() } }
     }
+
+    /**
+     * Roda [block]; se falhar (ex.: a permissão da agenda foi revogada, a agenda sumiu), avisa
+     * com [failure] em vez de derrubar o app e devolve null. Cancelamento passa direto.
+     */
+    suspend fun <T> guard(@StringRes failure: Int = R.string.msg_action_failed, block: suspend () -> T): T? =
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("Pulso", "Falha numa ação", e)
+            show(UiMessage(failure))
+            null
+        }
 }
 
 /** Snackbar Pulso: surface3 + hairline, raio 14, texto + ação em emberText. */

@@ -211,6 +211,8 @@
     <string name="focus_take_long_break">Pausa longa · %1$s</string>
     <string name="focus_next_session">Próxima sessão</string>
     <string name="focus_back_to_focus">Voltar ao foco</string>
+    <string name="msg_calendar_write_failed">Não foi possível gravar na agenda. Confira se o Pulso ainda tem acesso à agenda e tente de novo.</string>
+    <string name="msg_action_failed">Não foi possível concluir. Tente de novo.</string>
     <string name="reminder_channel">Lembretes de tarefas</string>
     <string name="reminder_channel_desc">Aviso no horário dos lembretes das tarefas.</string>
     <string name="reminder_action_done">Concluir</string>

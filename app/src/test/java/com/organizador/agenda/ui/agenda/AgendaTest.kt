@@ -247,6 +247,19 @@ class AgendaTest {
     }
 
     @Test
+    fun formularioViewModel_falhaAoGravar_continuaNoFormularioEAvisa() = runTest(dispatcher) {
+        val vm = EventFormViewModel(calendar, FakeSettingsRepository(), now, editor)
+        vm.start(null, null)
+        vm.update { it.copy(title = "Dentista") }
+        calendar.failWrites = true
+        vm.save()
+        val s = vm.state.value
+        assertNull("sem confirmação", s.confirmation)
+        assertFalse("pode tentar de novo", s.saving)
+        assertEquals(com.organizador.agenda.R.string.msg_calendar_write_failed, messenger.messages.first().text)
+    }
+
+    @Test
     fun formularioViewModel_editarCarregaOEventoESemPermissaoNaoCarrega() = runTest(dispatcher) {
         val vm = EventFormViewModel(calendar, FakeSettingsRepository(), now, editor)
         vm.start(target(EditScope.Single), null)

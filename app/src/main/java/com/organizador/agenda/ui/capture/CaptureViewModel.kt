@@ -84,7 +84,9 @@ class CaptureViewModel @Inject constructor(
         if (!current.canSend) return@launch
         val text = current.text
         val parsed = CaptureParser.parse(text, nowProvider.now())
-        if (current.kind == CaptureKind.Event) createEvent(parsed) else createTask(parsed)
+        val sent = if (current.kind == CaptureKind.Event) createEvent(parsed) else { createTask(parsed); true }
+        // Falhou ao gravar na agenda: o texto fica no campo para tentar de novo.
+        if (!sent) return@launch
         settings.addRecentCapture(text)
         input.value = Input()
     }
@@ -96,12 +98,13 @@ class CaptureViewModel @Inject constructor(
         messenger.show(UiMessage(R.string.msg_task_created, R.string.action_undo) { tasks.delete(id) })
     }
 
-    private suspend fun createEvent(p: ParsedCapture) {
+    /** false = não gravou (sem agenda ou erro do provider, já avisado). */
+    private suspend fun createEvent(p: ParsedCapture): Boolean {
         val s = settings.settings.first()
-        val calendarId = CalendarSelection.defaultForCreate(calendar.observeCalendars().first(), s.defaultCalendarId)?.id ?: return
+        val calendarId = CalendarSelection.defaultForCreate(calendar.observeCalendars().first(), s.defaultCalendarId)?.id ?: return false
         val zone = nowProvider.zone
         val start = LocalDateTime.of(p.date, p.time).atZone(zone).toInstant()
-        val id = calendar.createEvent(
+        val id = messenger.guard(R.string.msg_calendar_write_failed) { calendar.createEvent(
             EventDraft(
                 calendarId = calendarId,
                 title = p.title,
@@ -110,9 +113,10 @@ class CaptureViewModel @Inject constructor(
                 timeZone = zone,
                 reminderMinutes = listOf(s.eventReminderMinutes),
             ),
-        )
+        ) } ?: return false
         val label = "${PtBr.shortDate(p.date!!)} · ${PtBr.time(p.time!!)}"
         messenger.show(UiMessage(R.string.msg_event_created, R.string.action_undo, args = listOf(label)) { calendar.deleteEvent(id) })
+        return true
     }
 
     companion object {

@@ -35,23 +35,24 @@ class EventEditor @Inject constructor(
     private val messenger: Messenger,
     private val now: NowProvider,
 ) {
-    /** Cria (target nulo) ou grava a edição conforme o alcance escolhido. */
-    suspend fun save(target: EventTarget?, draft: EventDraft) {
+    /** Cria (target nulo) ou grava a edição conforme o alcance escolhido. false = falhou (já avisado). */
+    suspend fun save(target: EventTarget?, draft: EventDraft): Boolean = messenger.guard(R.string.msg_calendar_write_failed) {
         when (target?.scope) {
             null -> calendar.createEvent(draft)
             EditScope.Single -> calendar.updateEvent(target.eventId, draft)
             EditScope.Occurrence -> calendar.updateOccurrence(target.eventId, target.instanceStart, draft)
             EditScope.Series -> calendar.updateSeries(target.eventId, target.instanceStart, draft)
         }
-    }
+        true
+    } ?: false
 
     /** Remarca mantendo a duração e todo o resto. Evento avulso ganha "Desfazer". */
     suspend fun move(target: EventTarget, newStart: Instant) {
-        val details = calendar.getEvent(target.eventId) ?: return
+        val details = messenger.guard(R.string.msg_calendar_write_failed) { calendar.getEvent(target.eventId) } ?: return
         val original = EventForm.edit(details, target.instanceStart, target.instanceEnd, now.zone).toDraft(now.zone)
         val duration = Duration.between(target.instanceStart, target.instanceEnd)
         val moved = original.copy(start = newStart, end = newStart.plus(duration))
-        save(target, moved)
+        if (!save(target, moved)) return
         val label = PtBr.time(LocalDateTime.ofInstant(newStart, now.zone).toLocalTime())
         messenger.show(
             if (target.scope == EditScope.Single) {
@@ -76,8 +77,14 @@ class EventEditor @Inject constructor(
                 R.string.msg_event_cancelled,
                 R.string.action_undo,
                 onDismissed = {
-                    if (wholeEvent) calendar.deleteEvent(target.eventId)
-                    else calendar.cancelOccurrence(target.eventId, target.instanceStart)
+                    val done = messenger.guard(R.string.msg_calendar_write_failed) {
+                        if (wholeEvent) calendar.deleteEvent(target.eventId)
+                        else calendar.cancelOccurrence(target.eventId, target.instanceStart)
+                    }
+                    // Não apagou: o compromisso volta a aparecer.
+                    if (done == null) {
+                        if (wholeEvent) pending.showEvent(target.eventId) else pending.showInstance(target.instanceId)
+                    }
                 },
             ) {
                 if (wholeEvent) pending.showEvent(target.eventId) else pending.showInstance(target.instanceId)

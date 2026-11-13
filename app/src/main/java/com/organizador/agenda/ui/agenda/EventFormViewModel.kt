@@ -101,7 +101,11 @@ class EventFormViewModel @Inject constructor(
         if (current.saving) return
         _state.update { it.copy(saving = true) }
         viewModelScope.launch {
-            editor.save(target, form.toDraft(nowProvider.zone))
+            if (!editor.save(target, form.toDraft(nowProvider.zone))) {
+                // Falhou (o aviso já foi mostrado): a folha continua aberta para tentar de novo.
+                _state.update { it.copy(saving = false) }
+                return@launch
+            }
             _state.update {
                 it.copy(
                     saving = false,
