@@ -10,11 +10,14 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Alarme exato para o fim da sessão de foco (e, na fase 5, lembretes de tarefas). -->
+    <!-- Alarme exato para o fim da sessão de foco e para os lembretes de tarefas. -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission
         android:name="android.permission.SCHEDULE_EXACT_ALARM"
         android:maxSdkVersion="32" />
+
+    <!-- Lembretes: rearmar o alarme depois de religar o aparelho. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".PulsoApp"
@@ -50,6 +53,22 @@
         <receiver
             android:name=".focus.FocusAlarmReceiver"
             android:exported="false" />
+
+        <receiver
+            android:name=".reminder.ReminderReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".reminder.ReminderRescheduleReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

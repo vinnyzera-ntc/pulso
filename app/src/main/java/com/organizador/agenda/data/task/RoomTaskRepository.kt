@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -56,8 +57,16 @@ class RoomTaskRepository @Inject constructor(
     override suspend fun updateFields(task: Task) {
         require(task.title.isNotBlank()) { "Tarefa sem título" }
         val e = task.toEntity(Instant.now(clock))
+        val old = dao.get(e.id)?.task
         dao.updateFields(e.id, e.title, e.notes, e.priority, e.dueDate, e.dueTime, e.updatedAt)
+        if (old != null && (old.dueDate != e.dueDate || old.dueTime != e.dueTime)) dao.clearSnoozes(e.id)
     }
+
+    override suspend fun markRemindersFired(ids: List<Long>, at: Instant) {
+        if (ids.isNotEmpty()) dao.markRemindersFired(ids, at)
+    }
+
+    override suspend fun snoozeReminder(reminderId: Long, until: LocalDateTime) = dao.snoozeReminder(reminderId, until)
 
     override suspend fun setTags(taskId: Long, names: List<String>) =
         dao.replaceTags(taskId, names.map(::normalizeTagName).filter { it.isNotEmpty() })

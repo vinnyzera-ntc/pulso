@@ -9,6 +9,7 @@ import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 @Dao
@@ -82,6 +83,16 @@ interface TaskDao {
 
     @Query("DELETE FROM task_reminders WHERE task_id = :taskId")
     suspend fun deleteRemindersOf(taskId: Long)
+
+    @Query("UPDATE task_reminders SET fired_at = :at WHERE id IN (:ids)")
+    suspend fun markRemindersFired(ids: List<Long>, at: Instant)
+
+    @Query("UPDATE task_reminders SET snoozed_until = :until WHERE id = :id")
+    suspend fun snoozeReminder(id: Long, until: LocalDateTime)
+
+    /** Ao mudar o vencimento, um "Adiar" antigo deixa de valer: os lembretes voltam ao cálculo normal. */
+    @Query("UPDATE task_reminders SET snoozed_until = NULL WHERE task_id = :taskId")
+    suspend fun clearSnoozes(taskId: Long)
 
     /**
      * Grava a tarefa e substitui todos os filhos de uma vez (atômico).

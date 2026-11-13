@@ -64,6 +64,8 @@ fun PulsoNavHost(
     seedMode: String? = null,
     /** Muda a cada toque na notificação do foco com o app já aberto: leva para a aba Foco. */
     openFocusSignal: Int = 0,
+    /** Toque num lembrete: abre o detalhe da tarefa por cima da aba atual. */
+    openTask: OpenTaskRequest? = null,
     navController: NavHostController = rememberNavController(),
     appViewModel: AppViewModel = hiltViewModel(),
 ) {
@@ -75,6 +77,9 @@ fun PulsoNavHost(
     }
     LaunchedEffect(seedMode) { seedMode?.let(appViewModel::seedOnce) }
     LaunchedEffect(openFocusSignal) { if (openFocusSignal > 0) navController.navigateToTab(TopLevel.Focus) }
+    LaunchedEffect(openTask) {
+        openTask?.let { navController.navigate(TaskDetailRoute(it.taskId)) { launchSingleTop = true } }
+    }
     val focusActive by appViewModel.focusActive.collectAsStateWithLifecycle()
     // Durante uma sessão, a aba Foco é tela cheia (sem nav pill); "voltar" leva ao Hoje e o timer segue.
     val showNav = currentTab != null && !(currentTab == TopLevel.Focus && focusActive)

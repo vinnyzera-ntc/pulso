@@ -1,5 +1,6 @@
 package com.organizador.agenda.ui.tasks
 
+import android.Manifest
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +10,7 @@ import com.organizador.agenda.di.ApplicationScope
 import com.organizador.agenda.domain.model.Priority
 import com.organizador.agenda.domain.model.Tag
 import com.organizador.agenda.domain.model.Task
+import com.organizador.agenda.domain.repository.SettingsRepository
 import com.organizador.agenda.domain.repository.TaskRepository
 import com.organizador.agenda.domain.time.NowProvider
 import com.organizador.agenda.focus.FocusSelection
@@ -35,6 +37,8 @@ data class TaskDetailUiState(
     val task: Task? = null,
     val allTags: List<Tag> = emptyList(),
     val now: LocalDateTime = LocalDateTime.MIN,
+    /** O pedido de notificações já foi feito uma vez (distingue "nunca pedida" de "bloqueada"). */
+    val notificationPermissionRequested: Boolean = false,
 )
 
 @HiltViewModel
@@ -44,6 +48,7 @@ class TaskDetailViewModel @Inject constructor(
     nowProvider: NowProvider,
     private val messenger: Messenger,
     private val focusSelection: FocusSelection,
+    private val settings: SettingsRepository,
     /** Edições de texto são gravadas ao sair da tela, quando o escopo do ViewModel já foi cancelado. */
     @param:ApplicationScope private val appScope: CoroutineScope,
 ) : ViewModel() {
@@ -51,9 +56,19 @@ class TaskDetailViewModel @Inject constructor(
     private val id: Long = savedStateHandle.toRoute<TaskDetailRoute>().id
 
     val state: StateFlow<TaskDetailUiState> =
-        combine(tasks.observeTask(id), tasks.observeTags(), nowProvider.minuteTicks) { task, tags, now ->
-            TaskDetailUiState(loaded = true, task = task, allTags = tags, now = now)
+        combine(tasks.observeTask(id), tasks.observeTags(), nowProvider.minuteTicks, settings.settings) { task, tags, now, s ->
+            TaskDetailUiState(
+                loaded = true,
+                task = task,
+                allTags = tags,
+                now = now,
+                notificationPermissionRequested = Manifest.permission.POST_NOTIFICATIONS in s.requestedPermissions,
+            )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TaskDetailUiState())
+
+    fun onNotificationPermissionRequested() = viewModelScope.launch {
+        settings.markPermissionRequested(Manifest.permission.POST_NOTIFICATIONS)
+    }
 
     private val closeChannel = Channel<Unit>(Channel.CONFLATED)
 

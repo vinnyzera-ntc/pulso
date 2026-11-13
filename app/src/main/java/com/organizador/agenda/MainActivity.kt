@@ -1,11 +1,13 @@
 package com.organizador.agenda
 
-import android.os.Bundle
-import androidx.compose.runtime.mutableIntStateOf
 import android.content.Intent
+import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import com.organizador.agenda.ui.navigation.OpenTaskRequest
 import com.organizador.agenda.ui.navigation.PulsoNavHost
 import com.organizador.agenda.ui.navigation.SettingsRoute
 import com.organizador.agenda.ui.navigation.TopLevel
@@ -14,22 +16,39 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val openFocusSignal = mutableIntStateOf(0)
+
+    /** Tarefa pedida pela notificação de lembrete (um objeto novo a cada toque). */
+    private val openTask = mutableStateOf<OpenTaskRequest?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        // Recriada (rotação, processo restaurado): a navegação já volta sozinha, não reabre a tarefa.
+        if (savedInstanceState == null) openTask.value = taskRequest(intent)
         setContent {
             PulsoTheme {
-                PulsoNavHost(startRoute = startRoute(), seedMode = debugExtra(EXTRA_SEED), openFocusSignal = openFocusSignal.intValue)
+                PulsoNavHost(
+                    startRoute = startRoute(),
+                    seedMode = debugExtra(EXTRA_SEED),
+                    openFocusSignal = openFocusSignal.intValue,
+                    openTask = openTask.value,
+                )
             }
         }
     }
 
-    private val openFocusSignal = mutableIntStateOf(0)
-
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent.getStringExtra(EXTRA_OPEN) == OPEN_FOCUS) openFocusSignal.intValue++
+        when (intent.getStringExtra(EXTRA_OPEN)) {
+            OPEN_FOCUS -> openFocusSignal.intValue++
+            OPEN_TASK -> openTask.value = taskRequest(intent)
+        }
     }
+
+    private fun taskRequest(intent: Intent?): OpenTaskRequest? =
+        intent?.takeIf { it.getStringExtra(EXTRA_OPEN) == OPEN_TASK }
+            ?.getLongExtra(EXTRA_TASK_ID, -1)?.takeIf { it > 0 }?.let(::OpenTaskRequest)
 
     /**
      * Só no build debug: `adb shell am start -n com.organizador.agenda/.MainActivity -e tela agenda`
@@ -50,9 +69,11 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_SCREEN = "tela"
 
-        /** Extra da notificação do modo foco: abre o app na aba Foco. */
+        /** Extra das notificações: abre o app na aba Foco ou no detalhe de uma tarefa. */
         const val EXTRA_OPEN = "abrir"
         const val OPEN_FOCUS = "foco"
+        const val OPEN_TASK = "tarefa"
+        const val EXTRA_TASK_ID = "tarefa_id"
 
         /** `-e seed demo | demo-proximo | limpar`: dados de exemplo (ver DebugSeeder). */
         const val EXTRA_SEED = "seed"

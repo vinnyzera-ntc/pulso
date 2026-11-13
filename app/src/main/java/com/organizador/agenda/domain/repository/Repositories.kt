@@ -13,6 +13,7 @@ import com.organizador.agenda.domain.model.Task
 import kotlinx.coroutines.flow.Flow
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 interface TaskRepository {
@@ -30,6 +31,12 @@ interface TaskRepository {
 
     /** Troca os lembretes pelos deslocamentos dados (minutos antes do vencimento). */
     suspend fun setReminders(taskId: Long, offsetsMinutes: List<Int>)
+
+    /** Marca os lembretes como disparados em [at] (não tocam de novo para o mesmo horário). */
+    suspend fun markRemindersFired(ids: List<Long>, at: Instant)
+
+    /** "Adiar" da notificação: o lembrete passa a tocar em [until]. */
+    suspend fun snoozeReminder(reminderId: Long, until: LocalDateTime)
 
     /** Exclui e devolve a tarefa como estava, para "Desfazer". */
     suspend fun delete(id: Long): Task?

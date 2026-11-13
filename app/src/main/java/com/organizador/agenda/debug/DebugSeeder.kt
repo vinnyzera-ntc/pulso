@@ -35,6 +35,8 @@ import javax.inject.Singleton
  *  - `demo-proximo`: igual, mas o primeiro compromisso começa em 25 min;
  *  - `foco:<min>`: encurta o foco e as pausas para testar o timer (ex.: `foco:1`); guarda os
  *    valores do usuário e os devolve no `limpar`. Não mexe em tarefas nem na agenda.
+ *  - `lembrete:<min>`: tarefa "Teste de lembrete" para daqui a <min> minutos, com lembrete na
+ *    hora (sem apagar o resto); some no `limpar`.
  *  - `recentes`: apaga as frases recentes da Captura rápida (usadas nos testes).
  *  - `limpar`: remove exatamente o que o seeder criou (ids guardados), nada mais.
  *
@@ -53,6 +55,10 @@ class DebugSeeder @Inject constructor(
     suspend fun run(mode: String) = withContext(Dispatchers.IO) {
         if (mode == "recentes") {
             settings.clearRecentCaptures()
+            return@withContext
+        }
+        if (mode.startsWith("lembrete:")) {
+            reminderTask(mode.substringAfter(':').toLongOrNull() ?: 1)
             return@withContext
         }
         if (mode.startsWith("foco:")) {
@@ -90,6 +96,18 @@ class DebugSeeder @Inject constructor(
                 arrayOf(ACCOUNT, CalendarContract.ACCOUNT_TYPE_LOCAL),
             )
         }
+    }
+
+    private suspend fun reminderTask(minutes: Long) {
+        val at = LocalDateTime.now(clock).withSecond(0).withNano(0).plusMinutes(minutes)
+        val id = tasks.save(
+            Task(
+                title = "Teste de lembrete", dueDate = at.toLocalDate(), dueTime = at.toLocalTime(),
+                notes = "Criada pelo seed de debug.", reminders = listOf(TaskReminder(offsetMinutes = 0)),
+            ),
+        )
+        val ids = prefs.getStringSet(KEY_TASKS, emptySet()).orEmpty() + id.toString()
+        prefs.edit().putStringSet(KEY_TASKS, ids).apply()
     }
 
     private suspend fun seedTasks() {

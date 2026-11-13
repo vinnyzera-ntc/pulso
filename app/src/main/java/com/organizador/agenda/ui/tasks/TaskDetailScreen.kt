@@ -1,5 +1,11 @@
 package com.organizador.agenda.ui.tasks
 
+import android.Manifest
+import android.os.Build
+import com.organizador.agenda.ui.common.PermissionCopy
+import com.organizador.agenda.ui.common.PermissionPanel
+import com.organizador.agenda.ui.common.PermissionStatus
+import com.organizador.agenda.ui.common.rememberPermissionRequest
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -232,6 +238,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.TaskDetailContent(
                 }
             }
         }
+        if (task.dueDate != null && task.reminders.isNotEmpty()) ReminderNotificationPermission(state, vm)
         if (compact) Box(Modifier.fillMaxWidth().padding(top = 20.dp)) { mainAction() }
     }
 
@@ -391,4 +398,33 @@ private fun NewSubtaskRow(connect: Boolean, onAdd: (String) -> Unit) {
         )
         Spacer(Modifier.size(14.dp))
     }
+}
+
+/** Android 13+: sem a permissão de notificações, os lembretes desta tarefa não aparecem. */
+@Composable
+private fun ReminderNotificationPermission(state: TaskDetailUiState, vm: TaskDetailViewModel) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+    val request = rememberPermissionRequest(
+        permissions = listOf(Manifest.permission.POST_NOTIFICATIONS),
+        alreadyRequested = state.notificationPermissionRequested,
+        onRequested = { vm.onNotificationPermissionRequested() },
+        onResult = { },
+    )
+    if (request.status == PermissionStatus.Granted) return
+    PermissionPanel(
+        request = request,
+        icon = Icons.Outlined.NotificationsNone,
+        copy = PermissionCopy(
+            title = stringResource(R.string.perm_reminder_title),
+            message = stringResource(R.string.perm_reminder_message),
+            requestLabel = stringResource(R.string.perm_notif_request),
+            deniedTitle = stringResource(R.string.perm_notif_denied_title),
+            deniedMessage = stringResource(R.string.perm_reminder_denied_message),
+            blockedTitle = stringResource(R.string.perm_notif_blocked_title),
+            blockedMessage = stringResource(R.string.perm_reminder_blocked_message),
+            openSettingsLabel = stringResource(R.string.perm_open_settings),
+        ),
+        modifier = Modifier.padding(top = 10.dp),
+        primaryRequest = false,
+    )
 }

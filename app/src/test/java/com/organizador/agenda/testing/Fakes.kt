@@ -65,6 +65,13 @@ class FakeTaskRepository(private val now: () -> Instant = { Instant.EPOCH }) : T
     override suspend fun setReminders(taskId: Long, offsetsMinutes: List<Int>) =
         mutate(taskId) { it.copy(reminders = offsetsMinutes.map { m -> TaskReminder(offsetMinutes = m) }) }
 
+    override suspend fun markRemindersFired(ids: List<Long>, at: Instant) = state.update { list ->
+        list.map { t -> t.copy(reminders = t.reminders.map { if (it.id in ids) it.copy(firedAt = at) else it }) }
+    }
+    override suspend fun snoozeReminder(reminderId: Long, until: java.time.LocalDateTime) = state.update { list ->
+        list.map { t -> t.copy(reminders = t.reminders.map { if (it.id == reminderId) it.copy(snoozedUntil = until) else it }) }
+    }
+
     override suspend fun delete(id: Long): Task? {
         val snapshot = getTask(id) ?: return null
         state.update { list -> list.filter { it.id != id } }

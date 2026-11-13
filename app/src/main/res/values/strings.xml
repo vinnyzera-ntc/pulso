@@ -211,6 +211,11 @@
     <string name="focus_take_long_break">Pausa longa · %1$s</string>
     <string name="focus_next_session">Próxima sessão</string>
     <string name="focus_back_to_focus">Voltar ao foco</string>
+    <string name="reminder_channel">Lembretes de tarefas</string>
+    <string name="reminder_channel_desc">Aviso no horário dos lembretes das tarefas.</string>
+    <string name="reminder_action_done">Concluir</string>
+    <string name="reminder_action_snooze_short">Adiar 15 min</string>
+    <string name="reminder_action_snooze_long">Adiar 1 h</string>
     <string name="focus_channel_timer">Timer de foco</string>
     <string name="focus_channel_timer_desc">Contagem da sessão de foco em andamento.</string>
     <string name="focus_channel_done">Fim de sessão de foco</string>
@@ -218,6 +223,10 @@
     <string name="task_focus">Focar nesta tarefa</string>
     <string name="perm_notif_title">Mostrar o timer nas notificações</string>
     <string name="perm_notif_message">Com as notificações, o tempo restante aparece na tela de bloqueio e você é avisado quando a sessão termina. O foco funciona mesmo sem elas.</string>
+    <string name="perm_reminder_title">Permitir os avisos dos lembretes</string>
+    <string name="perm_reminder_message">Os lembretes desta tarefa chegam como notificação, com Concluir e Adiar.</string>
+    <string name="perm_reminder_denied_message">Sem notificações, os lembretes não aparecem. Você pode permitir quando quiser.</string>
+    <string name="perm_reminder_blocked_message">O Android não vai perguntar de novo. Para receber os lembretes, ative Notificações nas configurações do app.</string>
     <string name="perm_notif_request">Permitir notificações</string>
     <string name="perm_notif_denied_title">Notificações negadas</string>
     <string name="perm_notif_denied_message">O timer continua rodando, mas sem aviso no fim da sessão. Você pode permitir quando quiser.</string>
