@@ -123,6 +123,7 @@ class FakeSettingsRepository : SettingsRepository {
     override suspend fun setTaskReminderTime(time: LocalTime) = state.update { it.copy(taskReminderTime = time) }
     override suspend fun setEventReminderMinutes(minutes: Int) = state.update { it.copy(eventReminderMinutes = minutes) }
     override suspend fun setWeekStart(day: DayOfWeek) = state.update { it.copy(weekStart = day) }
+    override suspend fun setUpcomingDays(days: Int) = state.update { it.copy(upcomingDays = days) }
     override suspend fun markPermissionRequested(permission: String) =
         state.update { it.copy(requestedPermissions = it.requestedPermissions + permission) }
     override suspend fun clearRecentCaptures() = state.update { it.copy(recentCaptures = emptyList()) }

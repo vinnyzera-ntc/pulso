@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import java.time.Clock
 import java.time.Duration
 import java.time.LocalDate
@@ -27,7 +28,7 @@ class WidgetData @Inject constructor(
     private val settings: SettingsRepository,
     private val clock: Clock,
 ) {
-    /** Reemite quando tarefas, agendas visíveis ou compromissos de hoje mudam. */
+    /** Reemite quando tarefas, agendas visíveis, compromissos de hoje ou o limite de "Próximos dias" mudam. */
     @OptIn(ExperimentalCoroutinesApi::class)
     fun states(): Flow<WidgetState> {
         val visible = combine(calendar.observeCalendars(), settings.settings) { cals, s -> CalendarSelection.visibleIds(cals, s.calendarVisibility) }
@@ -37,8 +38,9 @@ class WidgetData @Inject constructor(
             val zone = clock.zone
             calendar.observeEvents(day.atStartOfDay(zone).toInstant(), day.plusDays(1).atStartOfDay(zone).toInstant(), ids)
         }
-        return combine(tasks.observeTasks(), events) { all, todayEvents ->
-            WidgetModel.build(all, todayEvents, LocalDateTime.now(clock), clock.zone)
+        val upcomingDays = settings.settings.map { it.upcomingDays }.distinctUntilChanged()
+        return combine(tasks.observeTasks(), events, upcomingDays) { all, todayEvents, days ->
+            WidgetModel.build(all, todayEvents, LocalDateTime.now(clock), clock.zone, days)
         }.distinctUntilChanged()
     }
 

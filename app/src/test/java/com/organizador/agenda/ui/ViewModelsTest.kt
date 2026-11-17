@@ -141,6 +141,43 @@ class ViewModelsTest {
         }
     }
 
+    @Test
+    fun hoje_proximosDias_porDiaComRotulo_eLimiteDosAjustes() = runTest(dispatcher) {
+        tasks.save(Task(title = "Hoje", dueDate = today))
+        tasks.save(Task(title = "Revisão do carro", dueDate = today.plusDays(1), dueTime = LocalTime.of(9, 0)))
+        tasks.save(Task(title = "Presente", dueDate = today.plusDays(3)))
+        tasks.save(Task(title = "Daqui a 10", dueDate = today.plusDays(10)))
+        val settings = FakeSettingsRepository()
+        val vm = TodayViewModel(tasks, FakeCalendarRepository(), settings, now, messenger)
+        vm.state.test {
+            val s = expectMostRecentItem()
+            assertEquals(listOf("Hoje"), s.tasks.map { it.title })
+            assertEquals(listOf("Amanhã · 11 nov", "Sexta · 13 nov"), s.upcoming.map { it.label })
+            val car = s.upcoming.first().tasks.single()
+            assertEquals("Revisão do carro", car.title)
+            assertEquals("sob o rótulo do dia, o chip mostra só a hora", listOf("09:00"), car.chips.map { it.text })
+            assertEquals("o progresso continua só de hoje", DayProgress(0, 1), s.progress)
+
+            settings.setUpcomingDays(14)
+            assertEquals(listOf("Amanhã · 11 nov", "Sexta · 13 nov", "Sexta · 20 nov"), expectMostRecentItem().upcoming.map { it.label })
+            settings.setUpcomingDays(3)
+            assertEquals(listOf("Amanhã · 11 nov", "Sexta · 13 nov"), expectMostRecentItem().upcoming.map { it.label })
+        }
+    }
+
+    @Test
+    fun hoje_concluirTarefaDeAmanha_saiDosProximosEFicaNoHojeComoConcluida() = runTest(dispatcher) {
+        val id = tasks.save(Task(title = "Adiantar", dueDate = today.plusDays(1)))
+        val vm = TodayViewModel(tasks, FakeCalendarRepository(), FakeSettingsRepository(), now, messenger)
+        vm.state.test {
+            assertEquals(1, expectMostRecentItem().upcoming.size)
+            vm.setDone(id, true)
+            val after = expectMostRecentItem()
+            assertTrue(after.upcoming.isEmpty())
+            assertTrue(after.tasks.single().done)
+        }
+    }
+
     // ---------- Tarefas ----------
 
     @Test

@@ -78,4 +78,12 @@ class PtBrTest {
         assertEquals("1 dia antes", PtBr.reminderBefore(1440))
         assertEquals("2 dias antes", PtBr.reminderBefore(2880))
     }
+
+    @Test
+    fun upcomingDay_amanhaComDataDepoisDiaDaSemana() {
+        val today = LocalDate.of(2026, 11, 17)
+        assertEquals("Amanhã · 18 nov", PtBr.upcomingDay(LocalDate.of(2026, 11, 18), today))
+        assertEquals("Sexta · 20 nov", PtBr.upcomingDay(LocalDate.of(2026, 11, 20), today))
+        assertEquals("Terça · 1 dez", PtBr.upcomingDay(LocalDate.of(2026, 12, 1), today))
+    }
 }

@@ -41,6 +41,7 @@
     <string name="today_empty_title">Nenhuma tarefa para hoje</string>
     <string name="today_empty_body">Aproveite ou planeje amanhã.</string>
     <string name="today_plan_tomorrow">Planejar amanhã</string>
+    <string name="today_upcoming">Próximos dias</string>
     <string name="today_connect_title">Conectar ao Google Agenda</string>
     <string name="today_connect_body">Veja aqui o compromisso de agora e o próximo. Toque para abrir os Ajustes.</string>
 
@@ -169,6 +170,42 @@
     <string name="settings_sessions_before_long">Sessões até a pausa longa</string>
     <string name="settings_sessions_description">Depois desse número de sessões de foco, a pausa é longa.</string>
     <string name="settings_version">Pulso %1$s</string>
+    <string name="settings_section_today_widget">Hoje e widget</string>
+    <string name="settings_section_during_focus">Durante o foco</string>
+    <string name="settings_keep_screen_on">Manter a tela ligada</string>
+    <string name="settings_keep_screen_on_sub">Enquanto a sessão estiver aberta</string>
+    <string name="settings_screensaver">Descanso de tela em paisagem</string>
+    <string name="settings_screensaver_sub">Timer grande com o celular deitado</string>
+    <string name="settings_access_on">Ativo</string>
+    <string name="settings_access_enable">Ativar</string>
+    <string name="settings_dnd">Não perturbe</string>
+    <string name="settings_dnd_sub">Só nas sessões de foco; nas pausas, não</string>
+    <string name="settings_dnd_grant">Permitir o acesso ao Não perturbe</string>
+    <string name="settings_dnd_grant_value">Abrir</string>
+    <string name="settings_dnd_allowed">Apps liberados</string>
+    <string name="settings_dnd_allowed_none">Nenhum</string>
+    <plurals name="settings_dnd_allowed_value">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
+    <string name="dnd_apps_description">As notificações destes apps continuam tocando durante o foco. As dos outros ficam na gaveta, em silêncio, até a pausa.</string>
+    <string name="dnd_apps_search">Buscar app</string>
+    <string name="dnd_apps_loading">Carregando apps…</string>
+    <string name="dnd_apps_empty">Nenhum app encontrado.</string>
+    <string name="dnd_listener_title">Permitir o acesso às notificações</string>
+    <string name="dnd_listener_body">O Android não deixa escolher apps no Não perturbe. Por isso, durante o foco, o Pulso repassa as notificações dos apps liberados para que elas toquem. Nada é guardado nem enviado.</string>
+    <string name="dnd_listener_open">Abrir configurações</string>
+    <string name="dnd_listener_label">Pulso · apps liberados no foco</string>
+    <string name="dnd_rule_name">Foco do Pulso</string>
+    <string name="dnd_rule_summary">Sessão de foco em andamento</string>
+    <string name="relay_channel">Apps liberados no foco</string>
+    <string name="relay_channel_desc">Notificações dos apps liberados, repassadas pelo Pulso durante o Não perturbe do foco.</string>
+    <string name="settings_upcoming_days">Próximos dias</string>
+    <string name="settings_upcoming_days_description">Quantos dias depois de hoje aparecem na seção Próximos dias do Hoje e do widget.</string>
+    <plurals name="settings_upcoming_days_value">
+        <item quantity="one">%1$d dia</item>
+        <item quantity="other">%1$d dias</item>
+    </plurals>
 
     <!-- Permissões -->
     <string name="perm_open_settings">Abrir configurações do app</string>
@@ -214,12 +251,21 @@
     <string name="focus_take_long_break">Pausa longa · %1$s</string>
     <string name="focus_next_session">Próxima sessão</string>
     <string name="focus_back_to_focus">Voltar ao foco</string>
+    <string name="focus_lofi">Música lofi no YouTube</string>
+    <string name="focus_screensaver_hint">Descanso de tela do foco. Toque para ver os controles.</string>
+    <string name="focus_lock">Bloquear com o timer por cima</string>
+    <string name="focus_lock_help_body">O cadeado bloqueia o celular e deixa o timer por cima da tela de bloqueio. Para isso, o Pulso usa um serviço de acessibilidade que só bloqueia a tela: ele não lê nem altera nada. A digital e o rosto continuam desbloqueando.</string>
+    <string name="focus_lock_help_steps">Em Acessibilidade, abra Apps instalados (ou Serviços), toque em Pulso e ative.</string>
+    <string name="focus_lock_open_settings">Abrir Acessibilidade</string>
+    <string name="focus_lock_service_label">Pulso · bloquear no modo foco</string>
+    <string name="focus_lock_service_summary">Só bloqueia a tela pelo cadeado do modo foco.</string>
+    <string name="focus_lock_service_description">Usado só pelo cadeado do modo foco do Pulso: bloqueia a tela, como o botão lateral, e deixa o timer por cima da tela de bloqueio. Não lê o conteúdo da tela, não recebe eventos e não altera nada. A digital e o rosto continuam desbloqueando.</string>
     <string name="msg_calendar_write_failed">Não foi possível gravar na agenda. Confira se o Pulso ainda tem acesso à agenda e tente de novo.</string>
     <string name="msg_no_calendar">Nenhuma agenda disponível para criar o compromisso. Confira o acesso à agenda em Ajustes.</string>
     <string name="msg_action_failed">Não foi possível concluir. Tente de novo.</string>
     <string name="task_checkbox_label">Concluir: %1$s</string>
     <string name="widget_title">Hoje</string>
-    <string name="widget_description">Tarefas de hoje e o próximo compromisso</string>
+    <string name="widget_description">Tarefas de hoje e dos próximos dias, e o próximo compromisso</string>
     <string name="widget_empty">Nada pendente para hoje.</string>
     <string name="widget_more">+%1$d mais</string>
     <string name="reminder_channel">Lembretes de tarefas</string>

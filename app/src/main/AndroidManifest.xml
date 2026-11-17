@@ -19,6 +19,24 @@
     <!-- Lembretes: rearmar o alarme depois de religar o aparelho. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Modo foco: reacender a tela por alguns segundos depois do cadeado (timer por cima do bloqueio). -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Modo foco: Não perturbe nas fases de foco (o usuário concede o acesso nas configurações). -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+
+    <queries>
+        <!-- Apps liberados no Não perturbe do foco: só os que aparecem na gaveta de apps. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- Música lofi: abrir o link no YouTube ou no navegador. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
     <application
         android:name=".PulsoApp"
         android:allowBackup="true"
@@ -48,6 +66,33 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Timer de foco (Pomodoro) iniciado pelo usuário, com contagem na notificação" />
+        </service>
+
+        <!-- Cadeado do descanso de tela: só bloqueia a tela (GLOBAL_ACTION_LOCK_SCREEN). Ativado pelo
+             usuário em Acessibilidade; protegido pela permissão que só o sistema tem. -->
+        <service
+            android:name=".focus.FocusLockService"
+            android:exported="true"
+            android:label="@string/focus_lock_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/focus_lock_accessibility" />
+        </service>
+
+        <!-- Não perturbe do foco: repassa as notificações dos apps liberados. Ativado pelo usuário em
+             Acesso às notificações; só o sistema pode se ligar a ele. -->
+        <service
+            android:name=".focus.FocusNotificationListener"
+            android:exported="true"
+            android:label="@string/dnd_listener_label"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
         </service>
 
         <receiver

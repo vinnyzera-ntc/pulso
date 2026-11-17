@@ -105,6 +105,21 @@ class SettingsViewModelTest {
         }
     }
 
+    @Test
+    fun proximosDias_padraoSeteETrocaNosAjustes() = runTest(dispatcher) {
+        val settings = FakeSettings()
+        val vm = SettingsViewModel(settings, FakeCalendars(emptyList()))
+        vm.state.test {
+            assertEquals(AppSettings.DEFAULT_UPCOMING_DAYS, awaitItem().upcomingDays)
+            assertEquals(7, AppSettings.DEFAULT_UPCOMING_DAYS)
+            vm.setUpcomingDays(14)
+            assertEquals(14, awaitItem().upcomingDays)
+            cancelAndIgnoreRemainingEvents()
+        }
+        assertEquals(14, settings.state.value.upcomingDays)
+        assertEquals(listOf(3, 7, 14, 30), SettingsViewModel.UPCOMING_DAYS_OPTIONS)
+    }
+
     private class FakeSettings : SettingsRepository {
         val state = MutableStateFlow(AppSettings())
         override val settings: Flow<AppSettings> = state
@@ -115,6 +130,7 @@ class SettingsViewModelTest {
         override suspend fun setTaskReminderTime(time: LocalTime) = state.update { it.copy(taskReminderTime = time) }
         override suspend fun setEventReminderMinutes(minutes: Int) = state.update { it.copy(eventReminderMinutes = minutes) }
         override suspend fun setWeekStart(day: DayOfWeek) = state.update { it.copy(weekStart = day) }
+        override suspend fun setUpcomingDays(days: Int) = state.update { it.copy(upcomingDays = days) }
         override suspend fun markPermissionRequested(permission: String) =
             state.update { it.copy(requestedPermissions = it.requestedPermissions + permission) }
         override suspend fun clearRecentCaptures() = state.update { it.copy(recentCaptures = emptyList()) }

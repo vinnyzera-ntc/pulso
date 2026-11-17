@@ -44,6 +44,9 @@ data class EventCardUi(
     val attendees: List<String> = emptyList(),
 )
 
+/** Um dia de "Próximos dias": "Amanhã · 18 nov" e as tarefas abertas dele. */
+data class UpcomingDayUi(val label: String, val tasks: List<TaskRowUi>)
+
 data class TodayUiState(
     val loaded: Boolean = false,
     val eyebrow: String = "",
@@ -52,6 +55,8 @@ data class TodayUiState(
     val calendarConnected: Boolean = true,
     val event: EventCardUi? = null,
     val tasks: List<TaskRowUi> = emptyList(),
+    /** Tarefas de amanhã até o limite dos Ajustes, por dia. */
+    val upcoming: List<UpcomingDayUi> = emptyList(),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -79,8 +84,11 @@ class TodayViewModel @Inject constructor(
                 calendar.observeEvents(day.atStartOfDay(zone).toInstant(), day.plusDays(1).atStartOfDay(zone).toInstant(), ids)
             }
 
-    private val base: Flow<TodayUiState> = combine(ticks, tasks.observeTasks(), todayEvents) { now, all, events ->
+    private val upcomingDays: Flow<Int> = settings.settings.map { it.upcomingDays }.distinctUntilChanged()
+
+    private val base: Flow<TodayUiState> = combine(ticks, tasks.observeTasks(), todayEvents, upcomingDays) { now, all, events, days ->
         val todayTasks = TaskLists.today(all, now, nowProvider.zone)
+        val today = now.toLocalDate()
         TodayUiState(
             loaded = true,
             eyebrow = PtBr.eyebrowDate(now.toLocalDate()),
@@ -89,6 +97,9 @@ class TodayViewModel @Inject constructor(
             calendarConnected = calendar.hasPermission(),
             event = eventCard(NowNext.pick(events, now.atZone(nowProvider.zone).toInstant())),
             tasks = todayTasks.map { TaskUiMapper.row(it, now) },
+            upcoming = TaskLists.upcoming(all, now, days).map { (date, list) ->
+                UpcomingDayUi(PtBr.upcomingDay(date, today), list.map { TaskUiMapper.row(it, now, underDayLabel = true) })
+            },
         )
     }
 

@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import com.organizador.agenda.focus.FocusDnd
 import com.organizador.agenda.ui.navigation.OpenScreenRequest
 import com.organizador.agenda.ui.navigation.OpenTaskRequest
 import com.organizador.agenda.ui.navigation.PulsoNavHost
@@ -14,9 +15,12 @@ import com.organizador.agenda.ui.navigation.SettingsRoute
 import com.organizador.agenda.ui.navigation.TopLevel
 import com.organizador.agenda.ui.pulso.PulsoTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject lateinit var focusDnd: FocusDnd
+
     private val openFocusSignal = mutableIntStateOf(0)
 
     /** Tarefa pedida pela notificação de lembrete (um objeto novo a cada toque). */
@@ -44,6 +48,12 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    /** O acesso ao Não perturbe pode ter mudado nas configurações do sistema. */
+    override fun onResume() {
+        super.onResume()
+        focusDnd.refresh()
     }
 
     override fun onNewIntent(intent: Intent) {

@@ -47,6 +47,7 @@ import androidx.glance.unit.ColorProvider
 import com.organizador.agenda.MainActivity
 import com.organizador.agenda.R
 import com.organizador.agenda.di.ApplicationScope
+import com.organizador.agenda.domain.time.PtBr
 import kotlinx.coroutines.CoroutineScope
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -64,8 +65,8 @@ interface WidgetEntryPoint {
 fun Context.widgetEntryPoint(): WidgetEntryPoint = EntryPointAccessors.fromApplication(applicationContext, WidgetEntryPoint::class.java)
 
 /**
- * Widget "Hoje": data e progresso, o compromisso de agora (ou o próximo) e as tarefas abertas
- * de hoje, com o círculo de concluir. Cores do Pulso em colors.xml (values e values-night).
+ * Widget "Hoje": data e progresso, o compromisso de agora (ou o próximo), as tarefas abertas
+ * de hoje e as dos próximos dias, com o círculo de concluir. Cores do Pulso em colors.xml (values e values-night).
  */
 class PulsoWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
@@ -93,6 +94,10 @@ private object WC {
 private const val HEADER_DP = 52
 private const val EVENT_DP = 58
 private const val ROW_DP = 44
+/** Rótulo "PRÓXIMOS DIAS" (11sp + recuo de 10 em cima e 2 embaixo). */
+private const val LABEL_DP = 26
+/** "Nada pendente para hoje." (13sp + recuo de 8). */
+private const val EMPTY_DP = 26
 private const val PADDING_DP = 14
 
 @Composable
@@ -135,26 +140,33 @@ private fun WidgetContent(s: WidgetState) {
         }
 
         Spacer(GlanceModifier.height(4.dp))
-        val available = height - PADDING_DP * 2 - HEADER_DP - (if (s.event != null) EVENT_DP else 0) - 4
-        var rows = (available / ROW_DP).coerceAtLeast(0)
-        // Se nem todas cabem, uma linha vira o "+N mais".
-        if (s.tasks.size > rows && rows > 0) rows -= 1
+        val available = height - PADDING_DP * 2 - HEADER_DP - (if (s.event != null) EVENT_DP else 0) - 4 -
+            (if (s.tasks.isEmpty()) EMPTY_DP else 0)
+        // Hoje primeiro; os próximos dias com o rótulo; o que não couber vira "+N mais".
+        val layout = WidgetModel.layout(s, available, ROW_DP, LABEL_DP)
         if (s.tasks.isEmpty()) {
             Text(
                 context.getString(R.string.widget_empty),
                 style = TextStyle(color = WC.text2, fontSize = 13.sp),
                 modifier = GlanceModifier.padding(top = 8.dp),
             )
-        } else {
-            s.tasks.take(rows).forEach { TaskRow(it) }
-            val more = s.tasks.size - rows
-            if (more > 0) {
-                Text(
-                    context.getString(R.string.widget_more, more),
-                    style = TextStyle(color = WC.text2, fontSize = 12.sp, fontWeight = FontWeight.Medium),
-                    modifier = GlanceModifier.padding(start = 38.dp, top = 6.dp).clickable(actionStartActivity(context.open(MainActivity.OPEN_TASKS))),
-                )
-            }
+        }
+        layout.today.forEach { TaskRow(it) }
+        if (layout.upcomingLabel) {
+            Text(
+                context.getString(R.string.today_upcoming).uppercase(PtBr.locale),
+                style = TextStyle(color = WC.text2, fontSize = 11.sp, fontWeight = FontWeight.Medium),
+                maxLines = 1,
+                modifier = GlanceModifier.padding(top = 10.dp, bottom = 2.dp),
+            )
+            layout.upcoming.forEach { TaskRow(it) }
+        }
+        if (layout.more > 0) {
+            Text(
+                context.getString(R.string.widget_more, layout.more),
+                style = TextStyle(color = WC.text2, fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                modifier = GlanceModifier.padding(start = 38.dp, top = 6.dp).clickable(actionStartActivity(context.open(MainActivity.OPEN_TASKS))),
+            )
         }
     }
 }
@@ -175,7 +187,12 @@ private fun TaskRow(t: WidgetTask) {
         Column(GlanceModifier.defaultWeight().clickable(actionStartActivity(context.openTask(t.id)))) {
             Text(t.title, style = TextStyle(color = WC.text, fontSize = 14.sp), maxLines = 1)
             t.meta?.let {
-                Text(it, style = TextStyle(color = if (t.overdue) WC.flare else WC.volt, fontSize = 11.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+                val color = when {
+                    t.overdue -> WC.flare
+                    t.future -> WC.text2
+                    else -> WC.volt
+                }
+                Text(it, style = TextStyle(color = color, fontSize = 11.sp, fontWeight = FontWeight.Medium), maxLines = 1)
             }
         }
     }

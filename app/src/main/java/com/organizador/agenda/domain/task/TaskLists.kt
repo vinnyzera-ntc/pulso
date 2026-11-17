@@ -61,6 +61,22 @@ object TaskLists {
         return open + done
     }
 
+    /**
+     * "Próximos dias": tarefas abertas com data de amanhã até hoje + [days], agrupadas por dia
+     * (em ordem de data) e, dentro do dia, na ordem de [openOrder]. Concluídas e sem data ficam
+     * de fora; [days] <= 0 devolve uma lista vazia.
+     */
+    fun upcoming(tasks: List<Task>, now: LocalDateTime, days: Int): List<Pair<LocalDate, List<Task>>> {
+        if (days <= 0) return emptyList()
+        val today = now.toLocalDate()
+        val last = today.plusDays(days.toLong())
+        return tasks
+            .filter { !it.isDone && it.dueDate != null && it.dueDate > today && it.dueDate <= last }
+            .sortedWith(openOrder)
+            .groupBy { it.dueDate!! }
+            .toList()
+    }
+
     fun progress(todayTasks: List<Task>): DayProgress = DayProgress(todayTasks.count { it.isDone }, todayTasks.size)
 
     fun overdueCount(tasks: List<Task>, now: LocalDateTime): Int = tasks.count { isOverdue(it, now) }

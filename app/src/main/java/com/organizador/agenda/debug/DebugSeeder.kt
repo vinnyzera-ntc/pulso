@@ -12,7 +12,6 @@ import com.organizador.agenda.domain.model.Subtask
 import com.organizador.agenda.domain.model.Tag
 import com.organizador.agenda.domain.model.Task
 import com.organizador.agenda.domain.model.TaskReminder
-import com.organizador.agenda.domain.model.FocusSettings
 import com.organizador.agenda.domain.repository.CalendarRepository
 import com.organizador.agenda.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.first
@@ -79,12 +78,13 @@ class DebugSeeder @Inject constructor(
             val f = settings.settings.first().focus
             prefs.edit().putString(KEY_FOCUS, "${f.focusMinutes},${f.shortBreakMinutes},${f.longBreakMinutes},${f.sessionsBeforeLongBreak}").apply()
         }
-        settings.setFocus(FocusSettings(focusMinutes = minutes, shortBreakMinutes = 1, longBreakMinutes = 1, sessionsBeforeLongBreak = 2))
+        // copy: as opções da sessão (tela ligada, Não perturbe...) ficam como estão.
+        settings.setFocus(settings.settings.first().focus.copy(focusMinutes = minutes, shortBreakMinutes = 1, longBreakMinutes = 1, sessionsBeforeLongBreak = 2))
     }
 
     private suspend fun clear() {
         prefs.getString(KEY_FOCUS, null)?.split(',')?.mapNotNull { it.toIntOrNull() }?.takeIf { it.size == 4 }?.let { (a, b, c, d) ->
-            settings.setFocus(FocusSettings(a, b, c, d))
+            settings.setFocus(settings.settings.first().focus.copy(focusMinutes = a, shortBreakMinutes = b, longBreakMinutes = c, sessionsBeforeLongBreak = d))
         }
         prefs.edit().remove(KEY_FOCUS).apply()
         prefs.getStringSet(KEY_TASKS, emptySet()).orEmpty().forEach { tasks.delete(it.toLong()) }

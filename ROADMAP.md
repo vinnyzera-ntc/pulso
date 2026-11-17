@@ -21,6 +21,22 @@ App pessoal, como um bloco de notas para anotar lembretes e alarmes, de uso indi
 | Widget de tela inicial | Concluída |
 | Liquid Glass só nas superfícies flutuantes (nav pill, avisos, folhas) | Concluída |
 
+## v1.2 (17/11/2026)
+
+| Item | Estado |
+|---|---|
+| Atualizar por cima sem perder dados (release falha sem a chave, regra de migração, checklist) | Concluída |
+| "Próximos dias" no Hoje e no widget (padrão 7 dias; 3/7/14/30 em Ajustes) | Concluída |
+| Foco: manter a tela ligada | Concluída |
+| Foco: descanso de tela em paisagem | Concluída |
+| Foco: bloquear com o timer por cima da tela de bloqueio (serviço de acessibilidade) | Concluída |
+| Foco: Não perturbe nas fases de foco, com apps liberados | Concluída |
+| Foco: atalho da playlist lofi no YouTube | Concluída |
+
+Decisões da v1.2: bloqueio por serviço de acessibilidade (não administrador do dispositivo, para
+digital e rosto continuarem desbloqueando); opções novas do foco desligadas por padrão; nada
+novo no banco (só DataStore).
+
 ## Fora do escopo
 
 - **Acompanhamentos / follow-ups** ("cobrar fulano", "aguardando resposta de…"). O app é de uso

@@ -26,13 +26,18 @@ data class TaskRowUi(
 /** Converte tarefas em linhas de tela. Puro (testado em JVM). */
 object TaskUiMapper {
 
-    fun row(task: Task, now: LocalDateTime): TaskRowUi = TaskRowUi(
+    /**
+     * [underDayLabel]: a linha fica sob o rótulo do dia ("Próximos dias" do Hoje), então o chip de
+     * prazo mostra só o horário, sem repetir a data.
+     */
+    fun row(task: Task, now: LocalDateTime, underDayLabel: Boolean = false): TaskRowUi = TaskRowUi(
         id = task.id,
         title = task.title,
         done = task.isDone,
         priority = task.priority,
         chips = buildList {
-            dueChip(task, now)?.let(::add)
+            val due = if (underDayLabel) task.dueTime?.let { TaskChipUi(PtBr.time(it), icon = ChipIcon.Clock) } else dueChip(task, now)
+            due?.let(::add)
             if (task.dueDate != null) task.recurrence?.let { add(TaskChipUi(PtBr.recurrence(it), icon = ChipIcon.Repeat)) }
             if (task.subtasks.isNotEmpty()) {
                 add(TaskChipUi("${task.subtasks.count { it.done }}/${task.subtasks.size}", icon = ChipIcon.Subtasks))
