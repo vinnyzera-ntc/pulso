@@ -21,14 +21,15 @@ android {
         applicationId = "com.organizador.agenda"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1.0"
+        // Atualização por cima: versionCode sempre maior que o instalado, mesma chave de assinatura.
+        versionCode = 3
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     // Assinatura de release: chave e senhas em keystore.properties (fora do git, só nesta máquina).
-    // Sem o arquivo, o build de release sai sem assinatura.
+    // Sem o arquivo, o empacotamento do release falha (ver packageRelease no fim do arquivo).
     val keystoreProps = rootProject.file("keystore.properties").takeIf { it.exists() }?.let { f ->
         Properties().apply { f.inputStream().use(::load) }
     }
@@ -71,6 +72,23 @@ android {
 
 room {
     schemaDirectory("$projectDir/schemas")
+}
+
+// Um APK de release sem assinatura (ou com outra chave) não instala por cima do que está no
+// celular, e desinstalar apagaria os dados. Sem keystore.properties, o release não é gerado.
+// Só um Boolean é capturado pela ação, para funcionar com o configuration cache.
+val releaseKeystorePresent = rootProject.file("keystore.properties").exists()
+tasks.matching { it.name == "packageRelease" }.configureEach {
+    val signed = releaseKeystorePresent
+    doFirst {
+        if (!signed) {
+            throw GradleException(
+                "keystore.properties não encontrado na raiz do projeto: o APK de release sairia sem " +
+                    "assinatura e não instalaria por cima da versão do celular. Restaure keystore.properties " +
+                    "e keystore/pulso-release.jks (a mesma chave de sempre) e rode de novo.",
+            )
+        }
+    }
 }
 
 dependencies {

@@ -27,7 +27,13 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 
 ## Release
 
-- `./gradlew :app:assembleRelease` gera `app/build/outputs/apk/release/app-release.apk`, versão **1.1.0** (versionCode 2), assinado. Atualizações: subir versionCode e instalar por cima (`adb install -r`), sem desinstalar.
+- `./gradlew :app:assembleRelease` gera `app/build/outputs/apk/release/app-release.apk`, versão **1.2.0** (versionCode 3), assinado. Atualizações: subir versionCode e instalar por cima (`adb install -r`), sem desinstalar.
+- **Checklist de release (atualizar sem perder dados):**
+  1. Mesma chave de sempre: `keystore/pulso-release.jks` com `keystore.properties`. Sem o arquivo, `packageRelease` falha de propósito (um APK sem assinatura ou com outra chave não instala por cima).
+  2. `versionCode` sempre maior que o instalado (o Android recusa downgrade).
+  3. Conferir o certificado antes de instalar ou publicar: `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk` deve mostrar SHA-256 `b71f77979fa6d925511e4b9dcb58c17137974e6835c2c0d7fe110214e9cc3202`.
+  4. Banco: mudou o schema → `version + 1`, AutoMigration/Migration e teste em `MigrationTest`; nunca `fallbackToDestructiveMigration` (regra também em `PulsoDatabase.kt`). Ajustes novos vão para o DataStore.
+  5. Instalar com `adb install -r` (nunca desinstalar) e conferir que tarefas, lembretes e ajustes continuam lá.
 - Chave em `keystore/pulso-release.jks`, senhas em `keystore.properties` (os dois **fora do git**). **Fazer cópia de segurança dos dois**: sem eles não é possível instalar atualizações por cima.
 - **O release 1.0.0 está instalado no aparelho de teste desde 12/11/2026** (no lugar do debug, que não tinha tarefas reais). Permissões de agenda e notificações concedidas pelo usuário.
 - Teste de reinício feito no aparelho com o release: o alarme foi rearmado sozinho após o boot e o lembrete tocou no horário (22:31), sem abrir o app. O teste de troca de fuso foi dispensado pelo usuário (sem viagem prevista); o comportamento está coberto por testes unitários.
