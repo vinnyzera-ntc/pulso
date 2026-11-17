@@ -1,6 +1,9 @@
 package com.organizador.agenda.ui.settings
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.rememberScrollState
@@ -74,7 +77,7 @@ import com.organizador.agenda.ui.pulso.components.LabelIcon
 import com.organizador.agenda.ui.pulso.components.RoundIconButton
 import com.organizador.agenda.ui.pulso.components.SectionLabel
 
-private enum class SettingsSheet { DefaultCalendar, Focus, ShortBreak, LongBreak, Sessions, EventReminder, WeekStart, TaskTime, UpcomingDays, LockHelp }
+private enum class SettingsSheet { DefaultCalendar, Focus, ShortBreak, LongBreak, Sessions, EventReminder, WeekStart, TaskTime, UpcomingDays, LockHelp, AllowedApps }
 
 private val CALENDAR_PERMISSIONS = listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
 
@@ -269,6 +272,34 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                             },
                         )
                     }
+                    SettingsDivider()
+                    SettingsToggleRow(
+                        title = stringResource(R.string.settings_dnd),
+                        subtitle = stringResource(R.string.settings_dnd_sub),
+                        checked = f.doNotDisturb,
+                        onCheckedChange = { on ->
+                            viewModel.setFocus(f.copy(doNotDisturb = on))
+                            if (on && !access.doNotDisturb) context.openDndAccessSettings()
+                        },
+                    )
+                    if (f.doNotDisturb && !access.doNotDisturb) {
+                        SettingsDivider()
+                        SettingsRow(
+                            title = stringResource(R.string.settings_dnd_grant),
+                            value = stringResource(R.string.settings_dnd_grant_value),
+                            onClick = { context.openDndAccessSettings() },
+                        )
+                    }
+                    if (f.doNotDisturb) {
+                        SettingsDivider()
+                        val count = f.dndAllowedPackages.size
+                        SettingsRow(
+                            title = stringResource(R.string.settings_dnd_allowed),
+                            value = if (count == 0) stringResource(R.string.settings_dnd_allowed_none)
+                            else pluralStringResource(R.plurals.settings_dnd_allowed_value, count, count),
+                            onClick = { sheet = SettingsSheet.AllowedApps },
+                        )
+                    }
                 }
             }
 
@@ -328,6 +359,14 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             )
         }
         SettingsSheet.LockHelp -> LockHelpSheet(onDismiss = dismiss)
+        SettingsSheet.AllowedApps -> AllowedAppsSheet(
+            allowed = f.dndAllowedPackages,
+            listenerGranted = access.notificationListener,
+            onToggle = { pkg, on ->
+                viewModel.setFocus(f.copy(dndAllowedPackages = if (on) f.dndAllowedPackages + pkg else f.dndAllowedPackages - pkg))
+            },
+            onDismiss = dismiss,
+        )
         SettingsSheet.TaskTime -> PulsoTimePickerDialog(
             title = stringResource(R.string.settings_task_reminder_time),
             initial = state.taskReminderTime,
@@ -337,6 +376,11 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
         )
         null -> Unit
     }
+}
+
+/** Lista de apps com acesso ao Não perturbe (o Pulso aparece lá por declarar ACCESS_NOTIFICATION_POLICY). */
+private fun Context.openDndAccessSettings() {
+    startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
 }
 
 @Composable

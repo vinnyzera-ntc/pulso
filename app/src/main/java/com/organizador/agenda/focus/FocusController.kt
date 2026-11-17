@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.organizador.agenda.alarm.setWakeUpAt
 import com.organizador.agenda.di.ApplicationScope
@@ -17,8 +18,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -91,12 +94,19 @@ class FocusController @Inject constructor(
     /** Chamado pela espera e pelo alarme quando o fim da fase chega. */
     fun onPhaseDue() = change { old ->
         val new = FocusMachine.elapse(old, now())
-        if (new !== old) {
-            close(old, completed = true)
-            notifier.phaseDone(new)
-        }
+        if (new !== old) close(old, completed = true)
         new
     }
+
+    /**
+     * Observadores síncronos de cada mudança (ex.: o Não perturbe do foco): rodam antes do aviso
+     * de fim de fase, para o aviso não sair silenciado pelo Não perturbe que acabou de desligar.
+     */
+    fun addStateHook(hook: suspend (FocusState) -> Unit) {
+        hooks += hook
+    }
+
+    private val hooks = CopyOnWriteArrayList<suspend (FocusState) -> Unit>()
 
     private fun change(transform: suspend (FocusState) -> FocusState) = scope.launch {
         mutex.withLock {
@@ -104,7 +114,18 @@ class FocusController @Inject constructor(
             val new = transform(old)
             if (new == old) return@withLock
             _state.value = new
+            hooks.forEach { hook ->
+                try {
+                    hook(new)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w("Pulso", "Falha num observador do foco", e)
+                }
+            }
             schedule(new)
+            // A fase chegou ao fim (só a espera/alarme leva a isso): aviso sonoro.
+            if (new.finished && !old.finished) notifier.phaseDone(new)
             if (new.active && !old.active) FocusService.start(context)
             // O aviso de fim de fase sai da barra ao encerrar ou quando a próxima fase começa.
             if (!new.active || (old.finished && !new.finished)) notifier.cancelDone()

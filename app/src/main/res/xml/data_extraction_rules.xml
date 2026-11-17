@@ -4,9 +4,13 @@
     <cloud-backup>
         <exclude domain="sharedpref" path="reminders.xml" />
         <exclude domain="sharedpref" path="debug_seed.xml" />
+        <exclude domain="sharedpref" path="focus_dnd.xml" />
+        <exclude domain="sharedpref" path="focus_relay.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="reminders.xml" />
         <exclude domain="sharedpref" path="debug_seed.xml" />
+        <exclude domain="sharedpref" path="focus_dnd.xml" />
+        <exclude domain="sharedpref" path="focus_relay.xml" />
     </device-transfer>
 </data-extraction-rules>

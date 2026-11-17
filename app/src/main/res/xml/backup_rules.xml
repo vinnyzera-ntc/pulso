@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Android 11 e anteriores. O banco e os ajustes vão no backup; ficam de fora a "última
-     conferência" dos lembretes (restaurada, dispararia lembretes antigos) e o estado do seed de debug. -->
+     conferência" dos lembretes (restaurada, dispararia lembretes antigos), o estado do seed de debug
+     e o estado do Não perturbe do foco e dos repasses (valem só para este aparelho, neste momento). -->
 <full-backup-content>
     <exclude domain="sharedpref" path="reminders.xml" />
     <exclude domain="sharedpref" path="debug_seed.xml" />
+    <exclude domain="sharedpref" path="focus_dnd.xml" />
+    <exclude domain="sharedpref" path="focus_relay.xml" />
 </full-backup-content>
