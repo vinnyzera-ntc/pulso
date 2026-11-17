@@ -35,6 +35,7 @@ class DataStoreSettingsRepository @Inject constructor(
         val weekStart = intPreferencesKey("week_start")
         val requestedPermissions = stringSetPreferencesKey("requested_permissions")
         val recentCaptures = stringPreferencesKey("recent_captures")
+        val upcomingDays = intPreferencesKey("upcoming_days")
     }
 
     override val settings: Flow<AppSettings> = store.data.map { p ->
@@ -93,6 +94,10 @@ class DataStoreSettingsRepository @Inject constructor(
 
     override suspend fun setWeekStart(day: DayOfWeek) {
         store.edit { it[Keys.weekStart] = day.value }
+    }
+
+    override suspend fun setUpcomingDays(days: Int) {
+        store.edit { it[Keys.upcomingDays] = days }
     }
 
     override suspend fun addRecentCapture(text: String) {

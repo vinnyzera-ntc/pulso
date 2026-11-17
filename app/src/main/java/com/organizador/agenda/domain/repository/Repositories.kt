@@ -101,6 +101,8 @@ interface SettingsRepository {
     suspend fun setTaskReminderTime(time: LocalTime)
     suspend fun setEventReminderMinutes(minutes: Int)
     suspend fun setWeekStart(day: DayOfWeek)
+    /** Dias depois de hoje na seção "Próximos dias" do Hoje e do widget. */
+    suspend fun setUpcomingDays(days: Int)
     suspend fun markPermissionRequested(permission: String)
 
     /** Guarda a frase no topo das recentes (sem repetir, no máximo [MAX_RECENT_CAPTURES]). */

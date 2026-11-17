@@ -43,6 +43,10 @@ object PtBr {
     fun eyebrowDate(date: LocalDate): String =
         "${weekday(date.dayOfWeek).capitalized()} · ${date.dayOfMonth} ${monthShort(date.month)}"
 
+    /** Rótulo de um dia de "Próximos dias": "Amanhã · 18 nov" ou, depois, "Quinta · 20 nov". */
+    fun upcomingDay(date: LocalDate, today: LocalDate): String =
+        if (date == today.plusDays(1)) "Amanhã · ${date.dayOfMonth} ${monthShort(date.month)}" else eyebrowDate(date)
+
     /** "Ter, 10 nov". */
     fun shortDate(date: LocalDate): String =
         "${weekdayShort(date.dayOfWeek).capitalized()}, ${date.dayOfMonth} ${monthShort(date.month)}"

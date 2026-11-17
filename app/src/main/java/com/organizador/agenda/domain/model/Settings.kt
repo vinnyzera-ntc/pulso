@@ -28,4 +28,10 @@ data class AppSettings(
     val recentCaptures: List<String> = emptyList(),
     /** Permissões já pedidas ao menos uma vez (para distinguir "nunca pedida" de "bloqueada"). */
     val requestedPermissions: Set<String> = emptySet(),
-)
+    /** Quantos dias depois de hoje aparecem em "Próximos dias" (Hoje e widget). */
+    val upcomingDays: Int = DEFAULT_UPCOMING_DAYS,
+) {
+    companion object {
+        const val DEFAULT_UPCOMING_DAYS = 7
+    }
+}

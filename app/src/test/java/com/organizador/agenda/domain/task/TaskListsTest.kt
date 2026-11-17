@@ -103,4 +103,44 @@ class TaskListsTest {
         assertEquals(listOf(7L), done(TaskFilter.ByTag(7)))
         assertEquals(2, TaskLists.overdueCount(tasks, now))
     }
+
+    // ---------- Próximos dias ----------
+
+    @Test
+    fun upcoming_deAmanhaAteHojeMaisN_agrupadoPorDiaEmOrdem() {
+        val tasks = listOf(
+            task(1, today),                                     // hoje: fica no Hoje
+            task(2, today.plusDays(1), at(16), Priority.P2),
+            task(3, today.plusDays(1), at(9)),
+            task(4, today.plusDays(1), p = Priority.P1),        // sem hora: depois das com hora
+            task(5, today.plusDays(3)),
+            task(6, today.plusDays(7)),                         // último dia do limite: entra
+            task(7, today.plusDays(8)),                         // passou do limite
+            task(8, today.minusDays(1)),                        // atrasada: é do Hoje
+        )
+        val groups = TaskLists.upcoming(tasks, now, 7)
+        assertEquals(listOf(today.plusDays(1), today.plusDays(3), today.plusDays(7)), groups.map { it.first })
+        assertEquals(listOf(3L, 2L, 4L), groups[0].second.map { it.id })
+        assertEquals(listOf(5L), groups[1].second.map { it.id })
+        assertEquals(listOf(6L), groups[2].second.map { it.id })
+    }
+
+    @Test
+    fun upcoming_concluidasESemDataDeFora_eZeroDiasVazio() {
+        val tasks = listOf(
+            task(1, today.plusDays(2), doneAt = instant(today, 9)),
+            task(2),
+            task(3, today.plusDays(2)),
+        )
+        assertEquals(listOf(3L), TaskLists.upcoming(tasks, now, 7).flatMap { it.second }.map { it.id })
+        assertEquals(emptyList<Pair<LocalDate, List<Task>>>(), TaskLists.upcoming(tasks, now, 0))
+        assertEquals("limite de 1 dia: só amanhã", emptyList<Long>(), TaskLists.upcoming(tasks, now, 1).flatMap { it.second }.map { it.id })
+    }
+
+    @Test
+    fun upcoming_tarefaDeAmanhaConcluidaHoje_ficaNoHojeComoConcluida() {
+        val tasks = listOf(task(1, today.plusDays(1), doneAt = instant(today, 11)))
+        assertEquals(emptyList<Long>(), TaskLists.upcoming(tasks, now, 7).flatMap { it.second }.map { it.id })
+        assertEquals(listOf(1L), TaskLists.today(tasks, now, TEST_ZONE).map { it.id })
+    }
 }

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
@@ -165,7 +166,7 @@ private fun TodayContent(
                     modifier = Modifier.padding(horizontal = PulsoSpace.gutter).padding(top = 22.dp),
                 )
             }
-            if (state.tasks.isEmpty()) {
+            if (state.tasks.isEmpty() && state.upcoming.isEmpty()) {
                 item(key = "empty") {
                     EmptyState(
                         title = stringResource(R.string.today_empty_title),
@@ -174,11 +175,49 @@ private fun TodayContent(
                         action = { PrimaryButton(stringResource(R.string.today_plan_tomorrow), onPlanTomorrow, Modifier.fillMaxWidth()) },
                     )
                 }
+            } else if (state.tasks.isEmpty()) {
+                // Hoje livre, mas há o que vem pela frente: aviso curto, sem o estado vazio grande.
+                item(key = "empty-short") {
+                    Text(
+                        stringResource(R.string.today_empty_title),
+                        style = Pulso.type.bodyS,
+                        color = c.text2,
+                        modifier = Modifier.padding(horizontal = PulsoSpace.gutter).padding(top = 10.dp, bottom = 4.dp),
+                    )
+                }
             }
             itemsIndexed(state.tasks, key = { _, t -> t.id }) { i, task ->
                 Column(Modifier.animateItem().padding(horizontal = PulsoSpace.gutter)) {
                     TaskRowItem(task, onCheckedChange = { onSetDone(task.id, it) }, onClick = { onOpenTask(task.id) })
                     if (i < state.tasks.lastIndex) HorizontalDivider(color = c.line, modifier = Modifier.padding(start = 35.dp))
+                }
+            }
+
+            // ---------- Próximos dias ----------
+            if (state.upcoming.isNotEmpty()) {
+                item(key = "upcoming-label") {
+                    SectionLabel(
+                        stringResource(R.string.today_upcoming),
+                        leading = { LabelIcon(Icons.Outlined.DateRange) },
+                        modifier = Modifier.padding(horizontal = PulsoSpace.gutter).padding(top = 26.dp),
+                    )
+                }
+                state.upcoming.forEach { day ->
+                    item(key = "day-${day.label}") {
+                        Text(
+                            day.label,
+                            style = Pulso.type.meta,
+                            color = c.voltText,
+                            modifier = Modifier.animateItem().padding(horizontal = PulsoSpace.gutter).padding(top = 12.dp, bottom = 2.dp),
+                        )
+                    }
+                    // Chave própria: a mesma tarefa pode trocar de seção (Hoje <-> Próximos) sem colidir.
+                    itemsIndexed(day.tasks, key = { _, t -> "up-${t.id}" }) { i, task ->
+                        Column(Modifier.animateItem().padding(horizontal = PulsoSpace.gutter)) {
+                            TaskRowItem(task, onCheckedChange = { onSetDone(task.id, it) }, onClick = { onOpenTask(task.id) })
+                            if (i < day.tasks.lastIndex) HorizontalDivider(color = c.line, modifier = Modifier.padding(start = 35.dp))
+                        }
+                    }
                 }
             }
         }
@@ -223,6 +262,10 @@ private val previewState = TodayUiState(
         TaskRowUi(2, "Enviar relatório mensal", false, Priority.P2, listOf(TaskChipUi("16:00", ChipTone.Volt, ChipIcon.Clock))),
         TaskRowUi(3, "Pagar boleto do condomínio", true, Priority.P4, emptyList()),
     ),
+    upcoming = listOf(
+        UpcomingDayUi("Amanhã · 11 nov", listOf(TaskRowUi(4, "Levar o carro na revisão", false, Priority.P3, listOf(TaskChipUi("09:00", icon = ChipIcon.Clock))))),
+        UpcomingDayUi("Sexta · 13 nov", listOf(TaskRowUi(5, "Comprar presente da Ana", false, Priority.P4, emptyList()))),
+    ),
 )
 
 @Preview(name = "Hoje · escuro", widthDp = 360, heightDp = 780)
@@ -234,5 +277,5 @@ private fun TodayDarkPreview() = PulsoTheme(darkTheme = true) {
 @Preview(name = "Hoje · claro", widthDp = 360, heightDp = 780)
 @Composable
 private fun TodayLightPreview() = PulsoTheme(darkTheme = false) {
-    TodayContent(previewState.copy(event = null, calendarConnected = false, tasks = emptyList(), progress = DayProgress(0, 0)), PaddingValues(), {}, {}, {}, {}, {}, {}, { _, _ -> })
+    TodayContent(previewState.copy(event = null, calendarConnected = false, tasks = emptyList(), upcoming = emptyList(), progress = DayProgress(0, 0)), PaddingValues(), {}, {}, {}, {}, {}, {}, { _, _ -> })
 }

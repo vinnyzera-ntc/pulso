@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -39,6 +40,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -66,7 +69,7 @@ import com.organizador.agenda.ui.pulso.components.LabelIcon
 import com.organizador.agenda.ui.pulso.components.RoundIconButton
 import com.organizador.agenda.ui.pulso.components.SectionLabel
 
-private enum class SettingsSheet { DefaultCalendar, Focus, ShortBreak, LongBreak, Sessions, EventReminder, WeekStart, TaskTime }
+private enum class SettingsSheet { DefaultCalendar, Focus, ShortBreak, LongBreak, Sessions, EventReminder, WeekStart, TaskTime, UpcomingDays }
 
 private val CALENDAR_PERMISSIONS = listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
 
@@ -192,6 +195,21 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 }
             }
 
+            // ---------- Hoje e widget ----------
+            item {
+                Spacer(Modifier.height(14.dp))
+                SectionLabel(stringResource(R.string.settings_section_today_widget), leading = { LabelIcon(Icons.Outlined.Today) })
+            }
+            item {
+                SettingsGroup {
+                    SettingsRow(
+                        title = stringResource(R.string.settings_upcoming_days),
+                        value = pluralStringResource(R.plurals.settings_upcoming_days_value, state.upcomingDays, state.upcomingDays),
+                        onClick = { sheet = SettingsSheet.UpcomingDays },
+                    )
+                }
+            }
+
             // ---------- Foco ----------
             item {
                 Spacer(Modifier.height(14.dp))
@@ -257,6 +275,14 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             stringResource(R.string.settings_week_start), SettingsViewModel.WEEK_START_OPTIONS, state.weekStart,
             { PtBr.weekday(it).capitalized() }, { viewModel.setWeekStart(it) }, dismiss,
         )
+        SettingsSheet.UpcomingDays -> {
+            val res = LocalContext.current.resources
+            ChoiceSheet(
+                stringResource(R.string.settings_upcoming_days), SettingsViewModel.UPCOMING_DAYS_OPTIONS, state.upcomingDays,
+                { res.getQuantityString(R.plurals.settings_upcoming_days_value, it, it) }, { viewModel.setUpcomingDays(it) }, dismiss,
+                description = stringResource(R.string.settings_upcoming_days_description),
+            )
+        }
         SettingsSheet.TaskTime -> PulsoTimePickerDialog(
             title = stringResource(R.string.settings_task_reminder_time),
             initial = state.taskReminderTime,

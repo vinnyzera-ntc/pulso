@@ -42,6 +42,7 @@ data class SettingsUiState(
     val taskReminderTime: LocalTime = LocalTime.of(9, 0),
     val eventReminderMinutes: Int = 10,
     val weekStart: DayOfWeek = DayOfWeek.SUNDAY,
+    val upcomingDays: Int = AppSettings.DEFAULT_UPCOMING_DAYS,
 )
 
 @HiltViewModel
@@ -73,6 +74,7 @@ class SettingsViewModel @Inject constructor(
     fun setTaskReminderTime(time: LocalTime) = viewModelScope.launch { settingsRepo.setTaskReminderTime(time) }
     fun setEventReminderMinutes(minutes: Int) = viewModelScope.launch { settingsRepo.setEventReminderMinutes(minutes) }
     fun setWeekStart(day: DayOfWeek) = viewModelScope.launch { settingsRepo.setWeekStart(day) }
+    fun setUpcomingDays(days: Int) = viewModelScope.launch { settingsRepo.setUpcomingDays(days) }
 
     companion object {
         /** Chave do grupo de agendas que não são do Google; a tela troca pelo rótulo traduzido. */
@@ -84,6 +86,7 @@ class SettingsViewModel @Inject constructor(
         val SESSIONS_OPTIONS = listOf(2, 3, 4, 5, 6)
         val EVENT_REMINDER_OPTIONS = listOf(5, 10, 15, 30, 60)
         val WEEK_START_OPTIONS = listOf(DayOfWeek.SUNDAY, DayOfWeek.MONDAY)
+        val UPCOMING_DAYS_OPTIONS = listOf(3, 7, 14, 30)
 
         /** Montagem do estado de tela, pura (testada em JVM). */
         fun buildState(settings: AppSettings, calendars: List<DeviceCalendar>, hasAccess: Boolean): SettingsUiState {
@@ -116,6 +119,7 @@ class SettingsViewModel @Inject constructor(
                 taskReminderTime = settings.taskReminderTime,
                 eventReminderMinutes = settings.eventReminderMinutes,
                 weekStart = settings.weekStart,
+                upcomingDays = settings.upcomingDays,
             )
         }
     }

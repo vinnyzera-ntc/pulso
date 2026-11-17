@@ -41,6 +41,7 @@
     <string name="today_empty_title">Nenhuma tarefa para hoje</string>
     <string name="today_empty_body">Aproveite ou planeje amanhã.</string>
     <string name="today_plan_tomorrow">Planejar amanhã</string>
+    <string name="today_upcoming">Próximos dias</string>
     <string name="today_connect_title">Conectar ao Google Agenda</string>
     <string name="today_connect_body">Veja aqui o compromisso de agora e o próximo. Toque para abrir os Ajustes.</string>
 
@@ -169,6 +170,13 @@
     <string name="settings_sessions_before_long">Sessões até a pausa longa</string>
     <string name="settings_sessions_description">Depois desse número de sessões de foco, a pausa é longa.</string>
     <string name="settings_version">Pulso %1$s</string>
+    <string name="settings_section_today_widget">Hoje e widget</string>
+    <string name="settings_upcoming_days">Próximos dias</string>
+    <string name="settings_upcoming_days_description">Quantos dias depois de hoje aparecem na seção Próximos dias do Hoje e do widget.</string>
+    <plurals name="settings_upcoming_days_value">
+        <item quantity="one">%1$d dia</item>
+        <item quantity="other">%1$d dias</item>
+    </plurals>
 
     <!-- Permissões -->
     <string name="perm_open_settings">Abrir configurações do app</string>
@@ -219,7 +227,7 @@
     <string name="msg_action_failed">Não foi possível concluir. Tente de novo.</string>
     <string name="task_checkbox_label">Concluir: %1$s</string>
     <string name="widget_title">Hoje</string>
-    <string name="widget_description">Tarefas de hoje e o próximo compromisso</string>
+    <string name="widget_description">Tarefas de hoje e dos próximos dias, e o próximo compromisso</string>
     <string name="widget_empty">Nada pendente para hoje.</string>
     <string name="widget_more">+%1$d mais</string>
     <string name="reminder_channel">Lembretes de tarefas</string>
