@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -351,7 +352,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             { PtBr.weekday(it).capitalized() }, { viewModel.setWeekStart(it) }, dismiss,
         )
         SettingsSheet.UpcomingDays -> {
-            val res = context.resources
+            val res = LocalResources.current
             ChoiceSheet(
                 stringResource(R.string.settings_upcoming_days), SettingsViewModel.UPCOMING_DAYS_OPTIONS, state.upcomingDays,
                 { res.getQuantityString(R.plurals.settings_upcoming_days_value, it, it) }, { viewModel.setUpcomingDays(it) }, dismiss,
