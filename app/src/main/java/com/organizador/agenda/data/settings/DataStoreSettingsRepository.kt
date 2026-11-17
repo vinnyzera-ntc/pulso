@@ -2,6 +2,7 @@ package com.organizador.agenda.data.settings
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -36,6 +37,10 @@ class DataStoreSettingsRepository @Inject constructor(
         val requestedPermissions = stringSetPreferencesKey("requested_permissions")
         val recentCaptures = stringPreferencesKey("recent_captures")
         val upcomingDays = intPreferencesKey("upcoming_days")
+        val focusKeepScreenOn = booleanPreferencesKey("focus_keep_screen_on")
+        val focusScreensaver = booleanPreferencesKey("focus_landscape_screensaver")
+        val focusDnd = booleanPreferencesKey("focus_dnd")
+        val focusDndAllowed = stringSetPreferencesKey("focus_dnd_allowed")
     }
 
     override val settings: Flow<AppSettings> = store.data.map { p ->
@@ -52,6 +57,10 @@ class DataStoreSettingsRepository @Inject constructor(
                 shortBreakMinutes = p[Keys.shortBreak] ?: f.shortBreakMinutes,
                 longBreakMinutes = p[Keys.longBreak] ?: f.longBreakMinutes,
                 sessionsBeforeLongBreak = p[Keys.sessionsBeforeLong] ?: f.sessionsBeforeLongBreak,
+                keepScreenOn = p[Keys.focusKeepScreenOn] ?: f.keepScreenOn,
+                landscapeScreensaver = p[Keys.focusScreensaver] ?: f.landscapeScreensaver,
+                doNotDisturb = p[Keys.focusDnd] ?: f.doNotDisturb,
+                dndAllowedPackages = p[Keys.focusDndAllowed] ?: f.dndAllowedPackages,
             ),
             taskReminderTime = p[Keys.taskReminderSecondOfDay]?.let { LocalTime.ofSecondOfDay(it.toLong()) } ?: d.taskReminderTime,
             eventReminderMinutes = p[Keys.eventReminderMinutes] ?: d.eventReminderMinutes,
@@ -81,6 +90,10 @@ class DataStoreSettingsRepository @Inject constructor(
             it[Keys.shortBreak] = focus.shortBreakMinutes
             it[Keys.longBreak] = focus.longBreakMinutes
             it[Keys.sessionsBeforeLong] = focus.sessionsBeforeLongBreak
+            it[Keys.focusKeepScreenOn] = focus.keepScreenOn
+            it[Keys.focusScreensaver] = focus.landscapeScreensaver
+            it[Keys.focusDnd] = focus.doNotDisturb
+            it[Keys.focusDndAllowed] = focus.dndAllowedPackages
         }
     }
 

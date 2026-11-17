@@ -2,6 +2,13 @@ package com.organizador.agenda.ui.focus
 
 import android.Manifest
 import android.os.Build
+import android.content.res.Configuration
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import com.organizador.agenda.focus.FocusLockService
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -78,7 +85,7 @@ fun FocusScreen(contentPadding: PaddingValues, viewModel: FocusViewModel = hiltV
     Box(Modifier.fillMaxSize().background(c.deep)) {
         when {
             !state.loaded -> Unit
-            state.active -> FocusSession(state, viewModel)
+            state.active -> FocusSession(state, actions = viewModel)
             else -> FocusSetup(state, contentPadding, viewModel)
         }
     }
@@ -185,7 +192,22 @@ private fun NotificationPermission(state: FocusUiState, vm: FocusViewModel) {
 // ---------- Sessão em andamento ----------
 
 @Composable
-private fun FocusSession(state: FocusUiState, vm: FocusViewModel) {
+private fun FocusSession(state: FocusUiState, actions: FocusActions) {
+    val context = LocalContext.current
+    var lockHelp by rememberSaveable { mutableStateOf(false) }
+    val onLock = { if (!FocusLockService.lock(context)) lockHelp = true }
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    if (landscape && state.settings.landscapeScreensaver) {
+        FocusScreensaver(state, actions, onLock = onLock, onLofi = context::openLofi)
+    } else {
+        if (state.settings.keepScreenOn) KeepScreenOnEffect()
+        FocusSessionContent(state, actions, onLofi = context::openLofi)
+    }
+    if (lockHelp) LockHelpSheet(onDismiss = { lockHelp = false })
+}
+
+@Composable
+private fun FocusSessionContent(state: FocusUiState, vm: FocusActions, onLofi: () -> Unit) {
     val c = Pulso.colors
     val phaseLabel = stringResource(
         when (state.phase) {
@@ -208,17 +230,19 @@ private fun FocusSession(state: FocusUiState, vm: FocusViewModel) {
             SessionControls(state, vm, spacing = 14.dp, modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 10.dp))
         }
 
-        // Topo: "MODO FOCO … SESSÃO 2/4".
+        // Topo: "MODO FOCO … SESSÃO 2/4" e o atalho da música lofi no canto.
         Row(
-            Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = PulsoSpace.gutter).padding(top = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            Modifier.fillMaxWidth().statusBarsPadding().padding(start = PulsoSpace.gutter, end = 6.dp).padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(phaseLabel.uppercase(PtBr.locale), style = Pulso.type.eyebrow, color = c.text2)
+            Text(phaseLabel.uppercase(PtBr.locale), style = Pulso.type.eyebrow, color = c.text2, modifier = Modifier.weight(1f))
             Text(
                 stringResource(R.string.focus_session_count, state.session, state.sessionsPerCycle).uppercase(PtBr.locale),
                 style = Pulso.type.eyebrow,
                 color = c.text2,
             )
+            LofiButton(onLofi)
         }
     }
 }
@@ -274,7 +298,7 @@ private fun TimerPane(state: FocusUiState, center: Float, modifier: Modifier = M
 
 /** Segmentos das sessões + as ações da fase (uma só em ember) + "Encerrar foco". */
 @Composable
-private fun SessionControls(state: FocusUiState, vm: FocusViewModel, spacing: androidx.compose.ui.unit.Dp, modifier: Modifier = Modifier) {
+private fun SessionControls(state: FocusUiState, vm: FocusActions, spacing: androidx.compose.ui.unit.Dp, modifier: Modifier = Modifier) {
     val c = Pulso.colors
     val isFocus = state.phase == FocusKind.Focus
     Column(

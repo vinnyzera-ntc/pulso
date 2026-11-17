@@ -65,7 +65,7 @@ class FocusViewModel @Inject constructor(
     tasks: TaskRepository,
     private val nowProvider: NowProvider,
     private val clock: Clock,
-) : ViewModel() {
+) : ViewModel(), FocusActions {
 
     /** Um tique por segundo, só enquanto o timer corre (a tela não precisa acordar parada). */
     private val seconds: Flow<Instant> = controller.state.map { it.running }.distinctUntilChanged().flatMapLatest { running ->
@@ -86,12 +86,12 @@ class FocusViewModel @Inject constructor(
 
     fun select(taskId: Long?) = selection.select(taskId)
     fun start() = controller.start(state.value.selectedTaskId)
-    fun pause() = controller.pause()
-    fun resume() = controller.resume()
-    fun startBreak() = controller.startBreak()
-    fun nextFocus() = controller.nextFocus()
-    fun stop() = controller.stop()
-    fun completeTask() = controller.completeTask()
+    override fun pause() { controller.pause() }
+    override fun resume() { controller.resume() }
+    override fun startBreak() { controller.startBreak() }
+    override fun nextFocus() { controller.nextFocus() }
+    override fun stop() { controller.stop() }
+    override fun completeTask() { controller.completeTask() }
 
     fun onNotificationPermissionRequested() = viewModelScope.launch {
         settings.markPermissionRequested(Manifest.permission.POST_NOTIFICATIONS)

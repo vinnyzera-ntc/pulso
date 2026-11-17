@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.Icon
@@ -36,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -54,6 +56,9 @@ import com.organizador.agenda.BuildConfig
 import com.organizador.agenda.R
 import com.organizador.agenda.domain.time.PtBr
 import com.organizador.agenda.domain.time.PtBr.capitalized
+import com.organizador.agenda.focus.FocusAccess
+import com.organizador.agenda.focus.FocusLockService
+import com.organizador.agenda.ui.focus.LockHelpSheet
 import com.organizador.agenda.ui.common.ChoiceSheet
 import com.organizador.agenda.ui.common.PermissionCopy
 import com.organizador.agenda.ui.common.PermissionPanel
@@ -69,15 +74,19 @@ import com.organizador.agenda.ui.pulso.components.LabelIcon
 import com.organizador.agenda.ui.pulso.components.RoundIconButton
 import com.organizador.agenda.ui.pulso.components.SectionLabel
 
-private enum class SettingsSheet { DefaultCalendar, Focus, ShortBreak, LongBreak, Sessions, EventReminder, WeekStart, TaskTime, UpcomingDays }
+private enum class SettingsSheet { DefaultCalendar, Focus, ShortBreak, LongBreak, Sessions, EventReminder, WeekStart, TaskTime, UpcomingDays, LockHelp }
 
 private val CALENDAR_PERMISSIONS = listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
 
 @Composable
 fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    // Acessos dados nas configurações do sistema (Acessibilidade, Não perturbe...): relidos a cada volta.
+    var access by remember { mutableStateOf(FocusAccess.read(context)) }
     LifecycleResumeEffect(Unit) {
         viewModel.onResume()
+        access = FocusAccess.read(context)
         onPauseOrDispose { }
     }
     val calendarRequest = rememberPermissionRequest(
@@ -228,6 +237,41 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 }
             }
 
+            // ---------- Durante o foco ----------
+            item {
+                Spacer(Modifier.height(14.dp))
+                SectionLabel(stringResource(R.string.settings_section_during_focus), leading = { LabelIcon(Icons.Outlined.Timer) })
+            }
+            item {
+                val f = state.focus
+                SettingsGroup {
+                    SettingsToggleRow(
+                        title = stringResource(R.string.settings_keep_screen_on),
+                        subtitle = stringResource(R.string.settings_keep_screen_on_sub),
+                        checked = f.keepScreenOn,
+                        onCheckedChange = { viewModel.setFocus(f.copy(keepScreenOn = it)) },
+                    )
+                    SettingsDivider()
+                    SettingsToggleRow(
+                        title = stringResource(R.string.settings_screensaver),
+                        subtitle = stringResource(R.string.settings_screensaver_sub),
+                        checked = f.landscapeScreensaver,
+                        onCheckedChange = { viewModel.setFocus(f.copy(landscapeScreensaver = it)) },
+                    )
+                    if (FocusLockService.supported) {
+                        SettingsDivider()
+                        SettingsRow(
+                            title = stringResource(R.string.focus_lock),
+                            value = stringResource(if (access.lockService) R.string.settings_access_on else R.string.settings_access_enable),
+                            onClick = {
+                                // Ativo: leva direto à Acessibilidade (para desligar); senão, explica antes.
+                                if (access.lockService) context.startActivity(FocusLockService.settingsIntent()) else sheet = SettingsSheet.LockHelp
+                            },
+                        )
+                    }
+                }
+            }
+
             item {
                 Text(
                     stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
@@ -276,13 +320,14 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             { PtBr.weekday(it).capitalized() }, { viewModel.setWeekStart(it) }, dismiss,
         )
         SettingsSheet.UpcomingDays -> {
-            val res = LocalContext.current.resources
+            val res = context.resources
             ChoiceSheet(
                 stringResource(R.string.settings_upcoming_days), SettingsViewModel.UPCOMING_DAYS_OPTIONS, state.upcomingDays,
                 { res.getQuantityString(R.plurals.settings_upcoming_days_value, it, it) }, { viewModel.setUpcomingDays(it) }, dismiss,
                 description = stringResource(R.string.settings_upcoming_days_description),
             )
         }
+        SettingsSheet.LockHelp -> LockHelpSheet(onDismiss = dismiss)
         SettingsSheet.TaskTime -> PulsoTimePickerDialog(
             title = stringResource(R.string.settings_task_reminder_time),
             initial = state.taskReminderTime,

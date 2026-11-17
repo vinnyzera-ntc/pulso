@@ -19,6 +19,9 @@
     <!-- Lembretes: rearmar o alarme depois de religar o aparelho. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Modo foco: reacender a tela por alguns segundos depois do cadeado (timer por cima do bloqueio). -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <application
         android:name=".PulsoApp"
         android:allowBackup="true"
@@ -48,6 +51,21 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Timer de foco (Pomodoro) iniciado pelo usuário, com contagem na notificação" />
+        </service>
+
+        <!-- Cadeado do descanso de tela: só bloqueia a tela (GLOBAL_ACTION_LOCK_SCREEN). Ativado pelo
+             usuário em Acessibilidade; protegido pela permissão que só o sistema tem. -->
+        <service
+            android:name=".focus.FocusLockService"
+            android:exported="true"
+            android:label="@string/focus_lock_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/focus_lock_accessibility" />
         </service>
 
         <receiver
