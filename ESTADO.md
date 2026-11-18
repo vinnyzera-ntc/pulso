@@ -61,8 +61,9 @@ Referência rápida para retomar o trabalho. Plano completo das fases em `ROADMA
 ## Próximos passos
 
 ### v1.2: falta
-- Roteiro de teste no aparelho (com o release instalado por cima): opções desligadas não mudam nada; tela ligada; descanso em paisagem; cadeado com o timer por cima; Não perturbe (app comum quieto, app liberado toca); encerrar devolve o modo anterior; YouTube abre a playlist.
-- Avaliação do usuário e merge da branch na `main`.
+- Release 1.2.0 publicado no GitHub (tag `v1.2.0`) e instalado por cima no aparelho de teste, com os dados preservados. Branch mergeada na `main` em 17/11/2026.
+- Testado no aparelho pelo usuário: **descanso de tela em paisagem: OK** (17/11/2026).
+- Falta testar no aparelho: opções desligadas não mudam nada; tela ligada em retrato; cadeado com o timer por cima; Não perturbe (app comum quieto, app liberado toca); encerrar devolve o modo anterior; YouTube abre a playlist.
 
 ### Ideias em aberto (nenhuma combinada)
 - Repetição também no formulário "Novo item" (hoje: Captura e detalhe da tarefa).
